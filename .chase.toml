@@ -1,0 +1,21 @@
+datafiles = "~/Documents/Chase/*CSV"
+
+# Exclude these categories from charts.
+chart_exclude_categories = [
+    # "ACH_CREDIT",
+    # "ACH_DEBIT",
+]
+
+# Normalize merchants that start with...
+[startswith_aliases]
+# "AMZN Mktp US" = "AMZN Mktp US"
+# "NETFLIX  INC." = "NETFLIX.COM"
+
+# Normalize merchants that contain...
+[in_aliases]
+# "To The Northern Trust Co" = "Payment To The Northern Trust Co"
+
+# Re-categorize these merchants...
+[categories_by_merchant]
+# "APS electric pmt PAYMENTS" = "Bills & Utilities"
+# "CIRCLE K # 09529" = "Groceries"
