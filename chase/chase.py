@@ -176,6 +176,10 @@ class Chase:
             key=lambda x: -abs(x[1]["total"]),
         ):
 
+            if self.options.category is not None and self.options.category != category:
+                # Limit transactions to `CATEGORY`.
+                continue
+
             if not self.options.totals_only:
                 print(self.color_text("category", f"{' ' + category:->80}"))
                 self._print_report_merchants(cdata)

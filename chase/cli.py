@@ -23,16 +23,9 @@ class ChaseCLI(BaseCLI):
 
         self.ArgumentParser(
             prog=__package__,
-            description="Process Chase Bank transaction files.",
-            epilog=self.dedent(
+            description=self.dedent(
                 """
-        For example,
-
-        Print each Category, in descending order of the total spent on each category,
-        and within each category, print each Merchant, in descending order of the
-        total spent with each Merchant.
-
-            python -m chase file...
+        Process Chase Bank transaction files.
                 """
             ),
         )
@@ -40,111 +33,145 @@ class ChaseCLI(BaseCLI):
     def add_arguments(self) -> None:
         """Add arguments to parser."""
 
-        arg = self.parser.add_argument(
-            "--no-color",
-            action="store_true",
-            help="Do not print in color",
-        )
-        self.add_default_to_help(arg, self.parser)
+        group = self.parser.add_argument_group(
+            "Category/Merchant Report",
+            self.dedent(
+                """
+        By default, `%(prog)s` prints the Category/Merchant Report:
 
-        arg = self.parser.add_argument(
-            "--no-exclude-chart-categories",
-            action="store_true",
-            help="Do not exclude select categories for charts",
+        List each Category, in descending order of the amount spent on
+        each category.  Within each Category, list each Merchant, in
+        descending order of the amount spent on each Merchant.
+                """
+            ),
         )
-        self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
             "--totals-only",
             action="store_true",
-            help="Print totals only",
+            help="List Categories and Totals only (suppress Merchants)",
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
+            "--detail",
+            action="store_true",
+            help="List Transactions under Merchants, in chronological order",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group(
+            "Category Monthly Report",
+            self.dedent(
+                """
+        List each Category, in descending order of the amount spent on
+        each category.  Within each Category, list each Month, and the
+        amount spent on the category that month.
+                """
+            ),
+        )
+
+        arg = group.add_argument(
+            "--monthly",
+            action="store_true",
+            help="Print Category Monthly Report",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        arg = group.add_argument(
             "--averages-only",
             action="store_true",
             help=(
-                "Print averages only (implies `--monthly`) "
-                "(`--(bar|pie)chart` may also be given)"
+                "List averages only (implies `--monthly`) "
+                "`--barchart` or `--piechart` may also be given)"
             ),
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
-            "--monthly",
-            action="store_true",
-            help="Generate a monthly report",
-        )
-        self.add_default_to_help(arg, self.parser)
+        group = self.parser.add_argument_group("Charting options")
 
-        arg = self.parser.add_argument(
-            "--category",
-            help="Limit transactions to `CATEGORY`",
-        )
-        self.add_default_to_help(arg, self.parser)
+        chart_group = group.add_mutually_exclusive_group()
 
-        arg = self.parser.add_argument(
+        arg = chart_group.add_argument(
             "--barchart",
             action="store_true",
             help="Display a barchart of category totals",
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
+        arg = chart_group.add_argument(
             "--piechart",
             action="store_true",
             help="Display a piechart of category totals",
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
-            "--detail",
-            action="store_true",
-            help="Include transaction details in the report",
-        )
-        self.add_default_to_help(arg, self.parser)
-
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
             "--moving-average",
             action="store_true",
             help="Plot a moving average on the chart",
         )
         self.add_default_to_help(arg, self.parser)
 
-        self.parser.add_argument(
+        arg = group.add_argument(
+            "--no-exclude-chart-categories",
+            action="store_true",
+            help="Do not exclude select categories for charts",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group("Filtering options")
+
+        group.add_argument(
             "-s",
             "--start",
             dest="start_date",
             help=self.dedent(
                 """
-    Print transactions at or after `start_date` (inclusive)
+    Print transactions at or after `START_DATE` (inclusive)
     (YYYY-MM-DD). Defaults to the epoch. Use `foy` to specify
     the first of this year.
                 """
             ),
         )
-        self.parser.add_argument(
+        group.add_argument(
             "-e",
             "--end",
             dest="end_date",
             help=self.dedent(
                 """
-    Print transactions prior to `end_date` (exclusive) (YYYY-MM-DD).
+    Print transactions prior to `END_DATE` (exclusive) (YYYY-MM-DD).
     Defaults to the end of time. Use `fom` to specify the first of
     this month.
                 """
             ),
         )
 
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
+            "--category",
+            help="Limit transactions to `CATEGORY`",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group("Misc options")
+
+        arg = group.add_argument(
+            "--no-color",
+            action="store_true",
+            help="Do not print report in color",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group("Datafile options")
+
+        arg = group.add_argument(
             "--use-datafiles",
             action="store_true",
             help="Process the CSV files defined in the config file",
         )
         self.add_default_to_help(arg, self.parser)
 
-        self.parser.add_argument(
+        group.add_argument(
             "files",
             nargs="*",
             help="CSV files to process",
