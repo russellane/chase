@@ -25,7 +25,7 @@ class ChaseCLI(BaseCLI):
             prog=__package__,
             description=self.dedent(
                 """
-        Process Chase Bank transaction files.
+    Process downloaded Chase Bank transaction files.
                 """
             ),
         )
@@ -37,11 +37,11 @@ class ChaseCLI(BaseCLI):
             "Category/Merchant Report",
             self.dedent(
                 """
-        By default, `%(prog)s` prints the Category/Merchant Report:
+    By default, `%(prog)s` prints the Category/Merchant Report:
 
-        List each Category, in descending order of the amount spent on
-        each category.  Within each Category, list each Merchant, in
-        descending order of the amount spent on each Merchant.
+    List each Category, in descending order of the amount spent on each
+    category.  Within each Category, list each Merchant, in descending
+    order of the amount spent on each Merchant.
                 """
             ),
         )
@@ -64,9 +64,9 @@ class ChaseCLI(BaseCLI):
             "Category Monthly Report",
             self.dedent(
                 """
-        List each Category, in descending order of the amount spent on
-        each category.  Within each Category, list each Month, and the
-        amount spent on the category that month.
+    List each Category, in descending order of the amount spent on each
+    category.  Within each Category, list each Month, and the amount
+    spent on the category that month.
                 """
             ),
         )
@@ -95,28 +95,33 @@ class ChaseCLI(BaseCLI):
         arg = chart_group.add_argument(
             "--barchart",
             action="store_true",
-            help="Display a barchart of category totals",
+            help="Display a barchart of the report",
         )
         self.add_default_to_help(arg, self.parser)
 
         arg = chart_group.add_argument(
             "--piechart",
             action="store_true",
-            help="Display a piechart of category totals",
+            help="Display a piechart of the report",
         )
         self.add_default_to_help(arg, self.parser)
 
         arg = group.add_argument(
             "--moving-average",
             action="store_true",
-            help="Plot a moving average on the chart",
+            help="Plot a moving average on a barchart",
         )
         self.add_default_to_help(arg, self.parser)
 
         arg = group.add_argument(
             "--no-exclude-chart-categories",
             action="store_true",
-            help="Do not exclude select categories for charts",
+            help=self.dedent(
+                """
+    Do not exclude select categories for charts. The categories are
+    listed under `chart_exclude_categories` in the config file.
+                """
+            ),
         )
         self.add_default_to_help(arg, self.parser)
 
@@ -172,7 +177,7 @@ class ChaseCLI(BaseCLI):
         self.add_default_to_help(arg, self.parser)
 
         group.add_argument(
-            "files",
+            "FILES",
             nargs="*",
             help="CSV files to process",
         )
@@ -180,10 +185,15 @@ class ChaseCLI(BaseCLI):
     def main(self) -> None:
         """Command line interface entry point (method)."""
 
-        if self.options.monthly and (self.options.barchart or self.options.piechart):
-            self.options.averages_only = True
-        elif self.options.averages_only:
-            self.options.monthly = True
+        # pylint: disable=too-many-branches
+
+        if self.options.barchart or self.options.piechart:
+            if self.options.category:
+                self.options.monthly = True
+            if self.options.monthly:
+                self.options.averages_only = True
+            elif self.options.averages_only:
+                self.options.monthly = True
 
         # Read all `csv` files on the command line within the date range.
         chase = Chase(self.config, self.options)
@@ -192,7 +202,9 @@ class ChaseCLI(BaseCLI):
         if self.options.use_datafiles and (datafiles := self.config.get("datafiles")):
             files = glob(str(Path(datafiles).expanduser()))
         else:
-            files = self.options.files
+            files = self.options.FILES
+
+        #
         chase.read_input_files(files, start, end)
 
         # If start/end are undefined, set to the earliest/latest transactions.
@@ -212,6 +224,16 @@ class ChaseCLI(BaseCLI):
         # Print report.
         if self.options.monthly:
             chase.print_monthly_report(nmonths)
+            if self.options.category:
+                if self.options.barchart:
+                    chase.display_barchart_monthly_category()
+                elif self.options.piechart:
+                    chase.display_piechart_monthly_category()
+            elif self.options.averages_only:
+                if self.options.barchart:
+                    chase.display_barchart_monthly_averages()
+                elif self.options.piechart:
+                    chase.display_piechart_monthly_averages()
         elif self.options.barchart:
             chase.display_barchart_category_totals()
         elif self.options.piechart:

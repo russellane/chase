@@ -7,16 +7,16 @@
           [--category CATEGORY] [--no-color] [--use-datafiles] [-h] [-v]
           [-V] [--config FILE] [--print-config] [--print-url]
           [--completion [SHELL]]
-          [files ...]
+          [FILES ...]
     
-Process Chase Bank transaction files.
+Process downloaded Chase Bank transaction files.
 
 #### Category/Merchant Report
   By default, `chase` prints the Category/Merchant Report:
   
-  List each Category, in descending order of the amount spent on
-  each category.  Within each Category, list each Merchant, in
-  descending order of the amount spent on each Merchant.
+  List each Category, in descending order of the amount spent on each
+  category.  Within each Category, list each Merchant, in descending
+  order of the amount spent on each Merchant.
 
     --totals-only       List Categories and Totals only (suppress Merchants)
                         (default: `False`).
@@ -24,23 +24,23 @@ Process Chase Bank transaction files.
                         order (default: `False`).
 
 #### Category Monthly Report
-  List each Category, in descending order of the amount spent on
-  each category.  Within each Category, list each Month, and the
-  amount spent on the category that month.
+  List each Category, in descending order of the amount spent on each
+  category.  Within each Category, list each Month, and the amount
+  spent on the category that month.
 
     --monthly           Print Category Monthly Report (default: `False`).
     --averages-only     List averages only (implies `--monthly`) `--barchart`
                         or `--piechart` may also be given) (default: `False`).
 
 #### Charting options
-    --barchart          Display a barchart of category totals (default:
+    --barchart          Display a barchart of the report (default: `False`).
+    --piechart          Display a piechart of the report (default: `False`).
+    --moving-average    Plot a moving average on a barchart (default:
                         `False`).
-    --piechart          Display a piechart of category totals (default:
-                        `False`).
-    --moving-average    Plot a moving average on the chart (default: `False`).
     --no-exclude-chart-categories
-                        Do not exclude select categories for charts (default:
-                        `False`).
+                        Do not exclude select categories for charts. The
+                        categories are listed under `chart_exclude_categories`
+                        in the config file (default: `False`).
 
 #### Filtering options
     -s START_DATE, --start START_DATE
@@ -60,7 +60,7 @@ Process Chase Bank transaction files.
 #### Datafile options
     --use-datafiles     Process the CSV files defined in the config file
                         (default: `False`).
-    files               CSV files to process.
+    FILES               CSV files to process.
 
 #### General options
     -h, --help          Show this help message and exit.

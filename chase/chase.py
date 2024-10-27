@@ -64,13 +64,117 @@ class Chase:
         self.filenames_by_row: dict[str, str] = {}
         self.chart_title_date: str | None = None
 
-    def is_excluded_from_charts(self, category: str) -> bool:
-        """Return True if `category` is not for charts."""
+    def print_report(self) -> None:
+        """Print the Category/Merchant Report."""
 
-        return (
-            not self.options.no_exclude_chart_categories
-            and category in self.chart_exclude_categories
-        )
+        for category, cdata in sorted(
+            self.categories.items(),
+            key=lambda x: -abs(x[1]["total"]),
+        ):
+
+            if self.options.category is not None and self.options.category != category:
+                # Limit transactions to `--category CATEGORY`.
+                continue
+
+            if not self.options.totals_only:
+                print(self.color_text("category", f"{' ' + category:->80}"))
+                self._print_report_merchants(cdata)
+
+            print(
+                self.color_text(
+                    "total",
+                    f"{cdata['total']:10.2f} {cdata['count']:10} Total {category}",
+                )
+            )
+
+    def _print_report_merchants(self, cdata: dict[str, Any]) -> None:
+        """Print the count and total of each merchant within `cdata`."""
+
+        for merchant, mdata in sorted(
+            cdata["merchants"].items(),
+            key=lambda x: -abs(x[1]["total"]),
+        ):
+            if self.options.detail:
+                for row in sorted(
+                    mdata["transactions"],
+                    key=lambda x: x.get("transaction_date"),
+                ):
+                    amount = float(row["Amount"])
+                    date = strftime("%Y-%m-%d", localtime(row["transaction_date"]))
+                    merchant = row["Description"]  # not normalized.
+                    print(self.color_text("transaction", f"{amount:10.2f} {date} {merchant}"))
+
+            print(
+                self.color_text(
+                    "subtotal",
+                    f"{mdata['total']:10.2f} {mdata['count']:10} {merchant}",
+                )
+            )
+
+    def print_monthly_report(self, nmonths: int) -> None:
+        """Print a report of monthly totals for each category."""
+
+        for category, cdata in sorted(
+            self.categories.items(),
+            key=lambda x: -abs(x[1]["total"]),
+        ):
+
+            if self.options.category is not None and self.options.category != category:
+                # Limit transactions to `--category CATEGORY`.
+                continue
+
+            if not self.options.averages_only:
+                print(self.color_text("category", f"{' ' + category:->80}"))
+
+            monthly_totals = cdata["monthly_totals"]
+            category_total = 0
+            months = sorted(monthly_totals.keys())
+
+            for month in months:
+                total = monthly_totals[month]
+                if not self.options.averages_only:
+                    print(self.color_text("subtotal", f"{month} {total:10.2f}"))
+                category_total += total
+
+            if not self.options.averages_only:
+                print(
+                    self.color_text(
+                        "total",
+                        f"{category_total:18.2f}   Total {category} over {nmonths} months",
+                    )
+                )
+
+            avg = category_total / nmonths
+            cdata["monthly_average"] = avg
+            print(
+                self.color_text(
+                    "average",
+                    f"{avg:18.2f} Average {category} over {nmonths} months span",
+                )
+            )
+
+            _nmonths = len(months)
+            avg = category_total / _nmonths
+            cdata["monthly_avg2"] = avg
+            if not self.options.averages_only:
+                print(
+                    self.color_text(
+                        "average",
+                        f"{avg:18.2f} Average {category} over {_nmonths} months with data",
+                    )
+                )
+
+            if self.options.detail and not self.options.averages_only:
+                self._print_monthly_report_merchants(cdata)
+
+    def _print_monthly_report_merchants(self, cdata: dict[str, Any]) -> None:
+        """Print the count and total of each merchant within a `category`."""
+
+        for merchant, mdata in sorted(
+            cdata["merchants"].items(),
+            key=lambda x: x[1]["total"],
+        ):
+            print(f"{mdata['total']:18.2f} {mdata['count']:5d} {merchant}")
 
     def read_input_files(
         self,
@@ -168,130 +272,51 @@ class Chase:
 
         return merchant
 
-    def print_report(self) -> None:
-        """Print detailed report of transactions."""
+    def color_text(self, color: str, text: str) -> str:
+        """Apply color to the given text.
 
-        for category, cdata in sorted(
-            self.categories.items(),
-            key=lambda x: -abs(x[1]["total"]),
-        ):
+        Args:
+            text (str): The text to color.
+            color (str): The color to apply ('category', 'transaction', 'subtotal',
+                                                'total', or 'average').
 
-            if self.options.category is not None and self.options.category != category:
-                # Limit transactions to `CATEGORY`.
-                continue
+        Returns:
+            str: The colored text.
+        """
 
-            if not self.options.totals_only:
-                print(self.color_text("category", f"{' ' + category:->80}"))
-                self._print_report_merchants(cdata)
+        if self.options.no_color:
+            return text
 
-            print(
-                self.color_text(
-                    "total",
-                    f"{cdata['total']:10.2f} {cdata['count']:10} Total {category}",
-                )
-            )
+        color_map = {
+            "category": "0;38;5;61m",
+            "transaction": "0;32m",  # green
+            "subtotal": "0;36m",  # cyan
+            "total": "0;33m",  # yellow
+            "average": "0;32m",  # green
+        }
+        return f"\033[{color_map.get(color, '0m')}{text}\033[0m"
 
-    def _print_report_merchants(self, cdata: dict[str, Any]) -> None:
-        """Print the count and total of each merchant within `cdata`."""
+    def _is_excluded_from_charts(self, category: str) -> bool:
+        """Return True if `category` is not for charts."""
 
-        for merchant, mdata in sorted(
-            cdata["merchants"].items(),
-            key=lambda x: -abs(x[1]["total"]),
-        ):
-            if self.options.detail:
-                for row in sorted(
-                    mdata["transactions"],
-                    key=lambda x: x.get("transaction_date"),
-                ):
-                    amount = float(row["Amount"])
-                    date = strftime("%Y-%m-%d", localtime(row["transaction_date"]))
-                    merchant = row["Description"]  # not normalized.
-                    print(self.color_text("transaction", f"{amount:10.2f} {date} {merchant}"))
+        return (
+            not self.options.no_exclude_chart_categories
+            and category in self.chart_exclude_categories
+        )
 
-            print(
-                self.color_text(
-                    "subtotal",
-                    f"{mdata['total']:10.2f} {mdata['count']:10} {merchant}",
-                )
-            )
+    # -------------------------------------------------------------------------------
 
-    def print_monthly_report(self, nmonths: int) -> None:
-        """Print a report of monthly totals for each category."""
+    def display_barchart_category_totals(self) -> None:
+        """Display a barchart of category totals."""
 
-        # pylint: disable=too-many-branches
+        categories, totals = self._get_category_totals()
+        self._display_barchart("Categories", "Total", "Category Totals", categories, totals)
 
-        for category, cdata in sorted(
-            self.categories.items(),
-            key=lambda x: -abs(x[1]["total"]),
-        ):
+    def display_piechart_category_totals(self) -> None:
+        """Display a piechart of category totals."""
 
-            if self.options.category is not None and self.options.category != category:
-                # Limit transactions to `CATEGORY`.
-                continue
-
-            if not self.options.averages_only:
-                print(self.color_text("category", f"{' ' + category:->80}"))
-
-            monthly_totals = cdata["monthly_totals"]
-            category_total = 0
-            months = sorted(monthly_totals.keys())
-
-            for month in months:
-                total = monthly_totals[month]
-                if not self.options.averages_only:
-                    print(self.color_text("subtotal", f"{month} {total:10.2f}"))
-                category_total += total
-
-            if not self.options.averages_only:
-                print(
-                    self.color_text(
-                        "total",
-                        f"{category_total:18.2f}   Total {category} over {nmonths} months",
-                    )
-                )
-
-            avg = category_total / nmonths
-            cdata["monthly_average"] = avg
-            print(
-                self.color_text(
-                    "average",
-                    f"{avg:18.2f} Average {category} over {nmonths} months span",
-                )
-            )
-
-            _nmonths = len(months)
-            avg = category_total / _nmonths
-            cdata["monthly_avg2"] = avg
-            if not self.options.averages_only:
-                print(
-                    self.color_text(
-                        "average",
-                        f"{avg:18.2f} Average {category} over {_nmonths} months with data",
-                    )
-                )
-
-            if self.options.detail and not self.options.averages_only:
-                self._print_monthly_report_merchants(cdata)
-
-        if self.options.category:
-            if self.options.barchart:
-                self.display_barchart_monthly_category()
-            elif self.options.piechart:
-                self.display_piechart_monthly_category()
-        elif self.options.averages_only:
-            if self.options.barchart:
-                self.display_barchart_monthly_averages()
-            elif self.options.piechart:
-                self.display_piechart_monthly_averages()
-
-    def _print_monthly_report_merchants(self, cdata: dict[str, Any]) -> None:
-        """Print the count and total of each merchant within a `category`."""
-
-        for merchant, mdata in sorted(
-            cdata["merchants"].items(),
-            key=lambda x: x[1]["total"],
-        ):
-            print(f"{mdata['total']:18.2f} {mdata['count']:5d} {merchant}")
+        categories, values = self._get_category_totals()
+        self._display_piechart("Category Totals", categories, values)
 
     def _get_category_totals(self) -> tuple[list[str], list[int]]:
         """Return list of categories, and list of their associated totals."""
@@ -303,9 +328,10 @@ class Chase:
             self.categories.items(),
             key=lambda x: -abs(x[1]["total"]),
         ):
-            if self.is_excluded_from_charts(category):
+            if self._is_excluded_from_charts(category):
                 continue
 
+            # Why does this print?
             print(
                 self.color_text(
                     "total",
@@ -318,6 +344,22 @@ class Chase:
 
         return categories, totals
 
+    # -------------------------------------------------------------------------------
+
+    def display_barchart_monthly_averages(self) -> None:
+        """Display a barchart of monthly averages."""
+
+        categories, averages = self._get_monthly_averages()
+        self._display_barchart(
+            "Categories", "Monthly Average", "Monthly Averages", categories, averages
+        )
+
+    def display_piechart_monthly_averages(self) -> None:
+        """Display a piechart of monthly averages."""
+
+        categories, values = self._get_monthly_averages()
+        self._display_piechart("Monthly Averages", categories, values)
+
     def _get_monthly_averages(self) -> tuple[list[str], list[int]]:
         """Return list of categories, and list of their associated monthly averages."""
 
@@ -328,9 +370,10 @@ class Chase:
             self.categories.items(),
             key=lambda x: -abs(x[1]["monthly_average"]),
         ):
-            if self.is_excluded_from_charts(category):
+            if self._is_excluded_from_charts(category):
                 continue
 
+            # Why does this print?
             print(
                 self.color_text(
                     "total",
@@ -343,32 +386,7 @@ class Chase:
 
         return categories, averages
 
-    def _get_monthly_totals(self, category: str) -> tuple[list[str], list[int]]:
-        """Return list of months, and list of associated monthly totals, for given `category`."""
-
-        cdata = self.categories[category]
-        months = []
-        totals = []
-
-        for month, total in sorted(cdata["monthly_totals"].items()):
-            months.append(month)
-            totals.append(round(total * -1))
-
-        return months, totals
-
-    def display_barchart_category_totals(self) -> None:
-        """Display a barchart of category totals."""
-
-        categories, totals = self._get_category_totals()
-        self._display_barchart("Categories", "Total", "Category Totals", categories, totals)
-
-    def display_barchart_monthly_averages(self) -> None:
-        """Display a barchart of monthly averages."""
-
-        categories, averages = self._get_monthly_averages()
-        self._display_barchart(
-            "Categories", "Monthly Average", "Monthly Averages", categories, averages
-        )
+    # -------------------------------------------------------------------------------
 
     def display_barchart_monthly_category(self) -> None:
         """Display a barchart of monthly totals for a given `--category CATEGORY`."""
@@ -377,6 +395,30 @@ class Chase:
         self._display_barchart(
             "Months", "Total", f"Monthly Totals for {self.options.category!r}", months, totals
         )
+
+    def display_piechart_monthly_category(self) -> None:
+        """Display a piechart of monthly totals for a given `--category CATEGORY`."""
+
+        months, totals = self._get_monthly_totals(self.options.category)
+        self._display_piechart(f"Monthly Totals for {self.options.category!r}", months, totals)
+
+    def _get_monthly_totals(self, category: str) -> tuple[list[str], list[int]]:
+        """Return list of months, and list of associated monthly totals, for given `category`."""
+
+        cdata = self.categories[category]
+        months = []
+        totals = []
+
+        for month, total in sorted(cdata["monthly_totals"].items()):
+
+            # Why does this NOT print?
+
+            months.append(month)
+            totals.append(round(total * -1))
+
+        return months, totals
+
+    # -------------------------------------------------------------------------------
 
     def _display_barchart(
         self,
@@ -432,24 +474,6 @@ class Chase:
 
             plt.text(x_pos, y_pos, f"${value}", ha="center", va=va)
 
-    def display_piechart_category_totals(self) -> None:
-        """Display a piechart of category totals."""
-
-        categories, values = self._get_category_totals()
-        self._display_piechart("Category Totals", categories, values)
-
-    def display_piechart_monthly_averages(self) -> None:
-        """Display a piechart of monthly averages."""
-
-        categories, values = self._get_monthly_averages()
-        self._display_piechart("Monthly Averages", categories, values)
-
-    def display_piechart_monthly_category(self) -> None:
-        """Display a piechart of monthly totals for a given `--category CATEGORY`."""
-
-        months, totals = self._get_monthly_totals(self.options.category)
-        self._display_piechart(f"Monthly Totals for {self.options.category!r}", months, totals)
-
     def _display_piechart(
         self,
         title: str,
@@ -483,27 +507,3 @@ class Chase:
         plt.title(f"{title} {self.chart_title_date}")
         plt.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle
         plt.show()
-
-    def color_text(self, color: str, text: str) -> str:
-        """Apply color to the given text.
-
-        Args:
-            text (str): The text to color.
-            color (str): The color to apply ('category', 'transaction', 'subtotal',
-                                                'total', or 'average').
-
-        Returns:
-            str: The colored text.
-        """
-
-        if self.options.no_color:
-            return text
-
-        color_map = {
-            "category": "0;38;5;61m",
-            "transaction": "0;32m",  # green
-            "subtotal": "0;36m",  # cyan
-            "total": "0;33m",  # yellow
-            "average": "0;32m",  # green
-        }
-        return f"\033[{color_map.get(color, '0m')}{text}\033[0m"
