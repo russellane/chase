@@ -36,6 +36,10 @@ def test_use_datafiles_no_dates() -> None:
     run_cli(["--use-datafiles"])
 
 
+def test_use_datafiles_no_dates_category() -> None:
+    run_cli(["--use-datafiles", "--category", "Groceries"])
+
+
 def test_use_datafiles_no_dates_no_color() -> None:
     run_cli(["--use-datafiles", "--no-color"])
 

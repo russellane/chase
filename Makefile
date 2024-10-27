@@ -1,7 +1,10 @@
 PROJECT = chase
 include Python.mk
-lint:: mypy
+lint:: mypy cov_fail_under_100
 doc :: README.md
+
+cov_fail_under_100:
+	python -m pytest --cov-fail-under 100 --cov=chase tests
 
 # The following is for manual testing.
 CHASE	:= python -m chase -s foy -e fom --use-datafiles
