@@ -1,6 +1,6 @@
 [project]
 name = "rlane-chase"
-version = "1.0.0"
+version = "1.0.1"
 description = "Process Chase Bank transaction files"
 authors = [
     {name = "Russel Lane", email = "russel@rlane.com"},
