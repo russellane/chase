@@ -52,15 +52,36 @@ Process downloaded Chase Bank transaction files.
                         (YYYY-MM-DD). Defaults to the end of time. Use `fom`
                         to specify the first of this month.
     --category CATEGORY
-                        Limit transactions to `CATEGORY`.
+                        Limit transactions to `CATEGORY`. If `--barchart` or
+                        `--piechart` are also given, then `--monthly` is
+                        implied.
 
 #### Misc options
     --no-color          Do not print report in color (default: `False`).
 
 #### Datafile options
-    --use-datafiles     Process the CSV files defined in the config file
-                        (default: `False`).
-    FILES               CSV files to process.
+    --use-datafiles     Process the `CSV` files defined under `datafiles` in
+                        the config file (default: `False`).
+    FILES               The `CSV` file(s) to process.
+
+#### Category Totals Chart
+  Plot the Total amount spent on each category across the date-range,
+  in descending order of the amount spent on the category.  This is
+  the representation of the Category/Merchant Report with the
+  `--totals-only` option.  Use `--barchart` or `--piechart`
+  to display this chart.
+
+#### Monthly Averages Chart
+  Plot the Average amount spent on each category per month, in
+  descending order of the amount spent on the category.  This is
+  the representation of the Category Monthly Report with the
+  `--averages-only` option.  Use `--barchart` or `--piechart`, along
+  with the `--monthly` or `--averages-only` option to display this chart.
+
+#### Monthly Category Chart
+  Plot the Amount spent each month on a given category.  Use
+  `--barchart` or `--piechart`, along with the `--category CATEGORY`
+  option to display this chart.
 
 #### General options
     -h, --help          Show this help message and exit.

@@ -155,7 +155,12 @@ class ChaseCLI(BaseCLI):
 
         arg = group.add_argument(
             "--category",
-            help="Limit transactions to `CATEGORY`",
+            help=self.dedent(
+                """
+    Limit transactions to `CATEGORY`. If `--barchart` or `--piechart`
+    are also given, then `--monthly` is implied.
+                """
+            ),
         )
         self.add_default_to_help(arg, self.parser)
 
@@ -173,14 +178,51 @@ class ChaseCLI(BaseCLI):
         arg = group.add_argument(
             "--use-datafiles",
             action="store_true",
-            help="Process the CSV files defined in the config file",
+            help="Process the `CSV` files defined under `datafiles` in the config file",
         )
         self.add_default_to_help(arg, self.parser)
 
         group.add_argument(
             "FILES",
             nargs="*",
-            help="CSV files to process",
+            help="The `CSV` file(s) to process",
+        )
+
+        group = self.parser.add_argument_group(
+            "Category Totals Chart",
+            self.dedent(
+                """
+    Plot the Total amount spent on each category across the date-range,
+    in descending order of the amount spent on the category.  This is
+    the representation of the Category/Merchant Report with the
+    `--totals-only` option.  Use `--barchart` or `--piechart`
+    to display this chart.
+                """
+            ),
+        )
+
+        group = self.parser.add_argument_group(
+            "Monthly Averages Chart",
+            self.dedent(
+                """
+    Plot the Average amount spent on each category per month, in
+    descending order of the amount spent on the category.  This is
+    the representation of the Category Monthly Report with the
+    `--averages-only` option.  Use `--barchart` or `--piechart`, along
+    with the `--monthly` or `--averages-only` option to display this chart.
+                """
+            ),
+        )
+
+        group = self.parser.add_argument_group(
+            "Monthly Category Chart",
+            self.dedent(
+                """
+    Plot the Amount spent each month on a given category.  Use
+    `--barchart` or `--piechart`, along with the `--category CATEGORY`
+    option to display this chart.
+                """
+            ),
         )
 
     @property
@@ -204,24 +246,26 @@ class ChaseCLI(BaseCLI):
         # Read all `csv` files on the command line within the date range.
         chase = Chase(self.config, self.options)
         start, end = self._get_start_end_options()
-
+        #
         if self.options.use_datafiles and (datafiles := self.config.get("datafiles")):
             files = glob(str(Path(datafiles).expanduser()))
         else:
             files = self.options.FILES
-
         #
         chase.read_input_files(files, start, end)
 
-        # If start/end are undefined, set to the earliest/latest transactions.
+        # If start/end are undefined, set to actual earliest/latest transactions.
         if not start or not end:
             earliest, latest = self._get_earliest_latest_transactions(chase)
             if not start:
                 start = earliest
             if not end:
                 end = latest
+
+        # Determine the number of months covered.
         nmonths = self._months_between(start, end)
 
+        # Output.
         if self.charting:
             chart = Chart(chase, nmonths, start, end)
 
@@ -231,10 +275,8 @@ class ChaseCLI(BaseCLI):
 
             if self.options.category:
                 chart.display_monthly_category()
-
             elif self.options.averages_only:
                 chart.display_monthly_averages()
-
             else:
                 chart.display_category_totals()
 

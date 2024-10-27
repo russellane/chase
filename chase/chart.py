@@ -16,23 +16,36 @@ __all__ = ["Chart"]
 
 
 class Chart:
-    """Docstring."""
+    """Provide charting methods."""
 
     def __init__(self, chase: Chase, nmonths: int, start: int, end: int) -> None:
-        """Docstring."""
+        """Initialize object.
+
+        Args:
+            chase:      The data.
+            nmonths:    The span of the data.
+            start:      The start date of the data in unix time.
+            end:        The end date of the data in unix time.
+        """
 
         self.chase = chase
-        _start = strftime("%Y-%m-%d", localtime(start))
-        _end = strftime("%Y-%m-%d", localtime(end))
-        self.chart_title_date = f"over {nmonths} Months from {_start} to {_end}"
+        self.start = start
+        self.nmonths = nmonths
+        self.end = end
 
-    def display_monthly_category(self) -> None:
+    def _format_title(self, title: str) -> str:
+
+        _start = strftime("%Y-%m-%d", localtime(self.start))
+        _end = strftime("%Y-%m-%d", localtime(self.end))
+        return f"{title} over {self.nmonths} Months from {_start} to {_end}"
+
+    def display_category_totals(self) -> None:
         """Display a chart of category totals."""
 
         if self.chase.options.barchart:
-            self._display_barchart_monthly_category()
+            self._display_barchart_category_totals()
         elif self.chase.options.piechart:
-            self._display_piechart_monthly_category()
+            self._display_piechart_category_totals()
 
     def _display_barchart_category_totals(self) -> None:
 
@@ -57,7 +70,6 @@ class Chart:
             if self._is_excluded_from_charts(category):
                 continue
 
-            # Why does this print?
             print(
                 self.chase.color_text(
                     "total",
@@ -111,7 +123,6 @@ class Chart:
             if self._is_excluded_from_charts(category):
                 continue
 
-            # Why does this print?
             print(
                 self.chase.color_text(
                     "total",
@@ -126,13 +137,13 @@ class Chart:
 
     # -------------------------------------------------------------------------------
 
-    def display_category_totals(self) -> None:
+    def display_monthly_category(self) -> None:
         """Display a chart of monthly totals for a given `--category CATEGORY`."""
 
         if self.chase.options.barchart:
-            self._display_barchart_category_totals()
+            self._display_barchart_monthly_category()
         elif self.chase.options.piechart:
-            self._display_piechart_category_totals()
+            self._display_piechart_monthly_category()
 
     def _display_barchart_monthly_category(self) -> None:
 
@@ -149,7 +160,9 @@ class Chart:
 
         months, totals = self._get_monthly_totals(self.chase.options.category)
         self._display_piechart(
-            f"Monthly Totals for {self.chase.options.category!r}", months, totals
+            f"Monthly Totals for {self.chase.options.category!r}",
+            months,
+            totals,
         )
 
     def _get_monthly_totals(self, category: str) -> tuple[list[str], list[int]]:
@@ -160,8 +173,6 @@ class Chart:
         totals = []
 
         for month, total in sorted(cdata["monthly_totals"].items()):
-
-            # Why does this NOT print?
 
             months.append(month)
             totals.append(round(total * -1))
@@ -187,7 +198,7 @@ class Chart:
         self._add_value_labels(bars)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.title(f"{title} {self.chart_title_date}")
+        plt.title(self._format_title(title))
         plt.xticks(rotation=45, ha="right")
         plt.axhline(y=0, color="k", linestyle="-", linewidth=0.5)  # Add a line at y=0
         plt.tight_layout()
@@ -254,6 +265,6 @@ class Chart:
             counterclock=False,
         )
 
-        plt.title(f"{title} {self.chart_title_date}")
+        plt.title(self._format_title(title))
         plt.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle
         plt.show()
