@@ -1,47 +1,87 @@
 ### chase - Process Chase Bank transaction files
 
 #### Usage
-    chase [--no-color] [--no-exclude-chart-categories] [--totals-only]
-          [--averages-only] [--monthly] [--category CATEGORY] [--barchart]
-          [--piechart] [--detail] [--moving-average] [-s START_DATE]
-          [-e END_DATE] [--use-datafiles] [-h] [-v] [-V] [--config FILE]
-          [--print-config] [--print-url] [--completion [SHELL]]
-          [files ...]
+    chase [--totals-only] [--detail] [--monthly] [--averages-only]
+          [--barchart | --piechart] [--moving-average]
+          [--no-exclude-chart-categories] [-s START_DATE] [-e END_DATE]
+          [--category CATEGORY] [--no-color] [--use-datafiles] [-h] [-v]
+          [-V] [--config FILE] [--print-config] [--print-url]
+          [--completion [SHELL]]
+          [FILES ...]
     
-Process Chase Bank transaction files.
+Process downloaded Chase Bank transaction files.
 
-#### Positional Arguments
-    files               CSV files to process.
+#### Category/Merchant Report
+  By default, `chase` prints the Category/Merchant Report:
+  
+  List each Category, in descending order of the amount spent on each
+  category.  Within each Category, list each Merchant, in descending
+  order of the amount spent on each Merchant.
 
-#### Options
-    --no-color          Do not print in color (default: `False`).
+    --totals-only       List Categories and Totals only (suppress Merchants)
+                        (default: `False`).
+    --detail            List Transactions under Merchants, in chronological
+                        order (default: `False`).
+
+#### Category Monthly Report
+  List each Category, in descending order of the amount spent on each
+  category.  Within each Category, list each Month, and the amount
+  spent on the category that month.
+
+    --monthly           Print Category Monthly Report (default: `False`).
+    --averages-only     List averages only (implies `--monthly`) `--barchart`
+                        or `--piechart` may also be given) (default: `False`).
+
+#### Charting options
+    --barchart          Display a barchart of the report (default: `False`).
+    --piechart          Display a piechart of the report (default: `False`).
+    --moving-average    Plot a moving average on a barchart (default:
+                        `False`).
     --no-exclude-chart-categories
-                        Do not exclude select categories for charts (default:
-                        `False`).
-    --totals-only       Print totals only (default: `False`).
-    --averages-only     Print averages only (implies `--monthly`)
-                        (`--(bar|pie)chart` may also be given) (default:
-                        `False`).
-    --monthly           Generate a monthly report (default: `False`).
-    --category CATEGORY
-                        Limit transactions to `CATEGORY`.
-    --barchart          Display a barchart of category totals (default:
-                        `False`).
-    --piechart          Display a piechart of category totals (default:
-                        `False`).
-    --detail            Include transaction details in the report (default:
-                        `False`).
-    --moving-average    Plot a moving average on the chart (default: `False`).
+                        Do not exclude select categories for charts. The
+                        categories are listed under `chart_exclude_categories`
+                        in the config file (default: `False`).
+
+#### Filtering options
     -s START_DATE, --start START_DATE
-                        Print transactions at or after `start_date`
+                        Print transactions at or after `START_DATE`
                         (inclusive) (YYYY-MM-DD). Defaults to the epoch. Use
                         `foy` to specify the first of this year.
     -e END_DATE, --end END_DATE
-                        Print transactions prior to `end_date` (exclusive)
+                        Print transactions prior to `END_DATE` (exclusive)
                         (YYYY-MM-DD). Defaults to the end of time. Use `fom`
                         to specify the first of this month.
-    --use-datafiles     Process the CSV files defined in the config file
-                        (default: `False`).
+    --category CATEGORY
+                        Limit transactions to `CATEGORY`. If `--barchart` or
+                        `--piechart` are also given, then `--monthly` is
+                        implied.
+
+#### Misc options
+    --no-color          Do not print report in color (default: `False`).
+
+#### Datafile options
+    --use-datafiles     Process the `CSV` files defined under `datafiles` in
+                        the config file (default: `False`).
+    FILES               The `CSV` file(s) to process.
+
+#### Category Totals Chart
+  Plot the Total amount spent on each category across the date-range,
+  in descending order of the amount spent on the category.  This is
+  the representation of the Category/Merchant Report with the
+  `--totals-only` option.  Use `--barchart` or `--piechart`
+  to display this chart.
+
+#### Monthly Averages Chart
+  Plot the Average amount spent on each category per month, in
+  descending order of the amount spent on the category.  This is
+  the representation of the Category Monthly Report with the
+  `--averages-only` option.  Use `--barchart` or `--piechart`, along
+  with the `--monthly` or `--averages-only` option to display this chart.
+
+#### Monthly Category Chart
+  Plot the Amount spent each month on a given category.  Use
+  `--barchart` or `--piechart`, along with the `--category CATEGORY`
+  option to display this chart.
 
 #### General options
     -h, --help          Show this help message and exit.
@@ -53,11 +93,3 @@ Process Chase Bank transaction files.
     --completion [SHELL]
                         Print completion scripts for `SHELL` and exit
                         (default: `bash`).
-
-For example,
-
-Print each Category, in descending order of the total spent on each category,
-and within each category, print each Merchant, in descending order of the
-total spent with each Merchant.
-
-    python -m chase file...

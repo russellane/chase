@@ -2,10 +2,11 @@
 
 from glob import glob
 from pathlib import Path
-from time import localtime, mktime, strftime, strptime
+from time import localtime, mktime, strptime
 
 from libcli import BaseCLI
 
+from chase.chart import Chart
 from chase.chase import Chase
 
 __all__ = ["ChaseCLI"]
@@ -23,16 +24,9 @@ class ChaseCLI(BaseCLI):
 
         self.ArgumentParser(
             prog=__package__,
-            description="Process Chase Bank transaction files.",
-            epilog=self.dedent(
+            description=self.dedent(
                 """
-        For example,
-
-        Print each Category, in descending order of the total spent on each category,
-        and within each category, print each Merchant, in descending order of the
-        total spent with each Merchant.
-
-            python -m chase file...
+    Process downloaded Chase Bank transaction files.
                 """
             ),
         )
@@ -40,135 +34,227 @@ class ChaseCLI(BaseCLI):
     def add_arguments(self) -> None:
         """Add arguments to parser."""
 
-        arg = self.parser.add_argument(
-            "--no-color",
-            action="store_true",
-            help="Do not print in color",
-        )
-        self.add_default_to_help(arg, self.parser)
+        group = self.parser.add_argument_group(
+            "Category/Merchant Report",
+            self.dedent(
+                """
+    By default, `%(prog)s` prints the Category/Merchant Report:
 
-        arg = self.parser.add_argument(
-            "--no-exclude-chart-categories",
-            action="store_true",
-            help="Do not exclude select categories for charts",
+    List each Category, in descending order of the amount spent on each
+    category.  Within each Category, list each Merchant, in descending
+    order of the amount spent on each Merchant.
+                """
+            ),
         )
-        self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
             "--totals-only",
             action="store_true",
-            help="Print totals only",
+            help="List Categories and Totals only (suppress Merchants)",
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
+            "--detail",
+            action="store_true",
+            help="List Transactions under Merchants, in chronological order",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group(
+            "Category Monthly Report",
+            self.dedent(
+                """
+    List each Category, in descending order of the amount spent on each
+    category.  Within each Category, list each Month, and the amount
+    spent on the category that month.
+                """
+            ),
+        )
+
+        arg = group.add_argument(
+            "--monthly",
+            action="store_true",
+            help="Print Category Monthly Report",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        arg = group.add_argument(
             "--averages-only",
             action="store_true",
             help=(
-                "Print averages only (implies `--monthly`) "
-                "(`--(bar|pie)chart` may also be given)"
+                "List averages only (implies `--monthly`) "
+                "`--barchart` or `--piechart` may also be given)"
             ),
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
-            "--monthly",
-            action="store_true",
-            help="Generate a monthly report",
-        )
-        self.add_default_to_help(arg, self.parser)
+        group = self.parser.add_argument_group("Charting options")
 
-        arg = self.parser.add_argument(
-            "--category",
-            help="Limit transactions to `CATEGORY`",
-        )
-        self.add_default_to_help(arg, self.parser)
+        chart_group = group.add_mutually_exclusive_group()
 
-        arg = self.parser.add_argument(
+        arg = chart_group.add_argument(
             "--barchart",
             action="store_true",
-            help="Display a barchart of category totals",
+            help="Display a barchart of the report",
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
+        arg = chart_group.add_argument(
             "--piechart",
             action="store_true",
-            help="Display a piechart of category totals",
+            help="Display a piechart of the report",
         )
         self.add_default_to_help(arg, self.parser)
 
-        arg = self.parser.add_argument(
-            "--detail",
-            action="store_true",
-            help="Include transaction details in the report",
-        )
-        self.add_default_to_help(arg, self.parser)
-
-        arg = self.parser.add_argument(
+        arg = group.add_argument(
             "--moving-average",
             action="store_true",
-            help="Plot a moving average on the chart",
+            help="Plot a moving average on a barchart",
         )
         self.add_default_to_help(arg, self.parser)
 
-        self.parser.add_argument(
+        arg = group.add_argument(
+            "--no-exclude-chart-categories",
+            action="store_true",
+            help=self.dedent(
+                """
+    Do not exclude select categories for charts. The categories are
+    listed under `chart_exclude_categories` in the config file.
+                """
+            ),
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group("Filtering options")
+
+        group.add_argument(
             "-s",
             "--start",
             dest="start_date",
             help=self.dedent(
                 """
-    Print transactions at or after `start_date` (inclusive)
+    Print transactions at or after `START_DATE` (inclusive)
     (YYYY-MM-DD). Defaults to the epoch. Use `foy` to specify
     the first of this year.
                 """
             ),
         )
-        self.parser.add_argument(
+        group.add_argument(
             "-e",
             "--end",
             dest="end_date",
             help=self.dedent(
                 """
-    Print transactions prior to `end_date` (exclusive) (YYYY-MM-DD).
+    Print transactions prior to `END_DATE` (exclusive) (YYYY-MM-DD).
     Defaults to the end of time. Use `fom` to specify the first of
     this month.
                 """
             ),
         )
 
-        arg = self.parser.add_argument(
-            "--use-datafiles",
-            action="store_true",
-            help="Process the CSV files defined in the config file",
+        arg = group.add_argument(
+            "--category",
+            help=self.dedent(
+                """
+    Limit transactions to `CATEGORY`. If `--barchart` or `--piechart`
+    are also given, then `--monthly` is implied.
+                """
+            ),
         )
         self.add_default_to_help(arg, self.parser)
 
-        self.parser.add_argument(
-            "files",
-            nargs="*",
-            help="CSV files to process",
+        group = self.parser.add_argument_group("Misc options")
+
+        arg = group.add_argument(
+            "--no-color",
+            action="store_true",
+            help="Do not print report in color",
         )
+        self.add_default_to_help(arg, self.parser)
+
+        group = self.parser.add_argument_group("Datafile options")
+
+        arg = group.add_argument(
+            "--use-datafiles",
+            action="store_true",
+            help="Process the `CSV` files defined under `datafiles` in the config file",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        group.add_argument(
+            "FILES",
+            nargs="*",
+            help="The `CSV` file(s) to process",
+        )
+
+        group = self.parser.add_argument_group(
+            "Category Totals Chart",
+            self.dedent(
+                """
+    Plot the Total amount spent on each category across the date-range,
+    in descending order of the amount spent on the category.  This is
+    the representation of the Category/Merchant Report with the
+    `--totals-only` option.  Use `--barchart` or `--piechart`
+    to display this chart.
+                """
+            ),
+        )
+
+        group = self.parser.add_argument_group(
+            "Monthly Averages Chart",
+            self.dedent(
+                """
+    Plot the Average amount spent on each category per month, in
+    descending order of the amount spent on the category.  This is
+    the representation of the Category Monthly Report with the
+    `--averages-only` option.  Use `--barchart` or `--piechart`, along
+    with the `--monthly` or `--averages-only` option to display this chart.
+                """
+            ),
+        )
+
+        group = self.parser.add_argument_group(
+            "Monthly Category Chart",
+            self.dedent(
+                """
+    Plot the Amount spent each month on a given category.  Use
+    `--barchart` or `--piechart`, along with the `--category CATEGORY`
+    option to display this chart.
+                """
+            ),
+        )
+
+    @property
+    def charting(self) -> bool:
+        """Return True if `--barchart` or `--piechart`."""
+        return bool(self.options.barchart or self.options.piechart)
 
     def main(self) -> None:
         """Command line interface entry point (method)."""
 
-        if self.options.monthly and (self.options.barchart or self.options.piechart):
-            self.options.averages_only = True
-        elif self.options.averages_only:
-            self.options.monthly = True
+        # pylint: disable=too-many-branches
+
+        if self.charting:
+            if self.options.category:
+                self.options.monthly = True
+            if self.options.monthly:
+                self.options.averages_only = True
+            elif self.options.averages_only:
+                self.options.monthly = True
 
         # Read all `csv` files on the command line within the date range.
         chase = Chase(self.config, self.options)
         start, end = self._get_start_end_options()
-
+        #
         if self.options.use_datafiles and (datafiles := self.config.get("datafiles")):
             files = glob(str(Path(datafiles).expanduser()))
         else:
-            files = self.options.files
+            files = self.options.FILES
+        #
         chase.read_input_files(files, start, end)
 
-        # If start/end are undefined, set to the earliest/latest transactions.
+        # If start/end are undefined, set to actual earliest/latest transactions.
         if not start or not end:
             earliest, latest = self._get_earliest_latest_transactions(chase)
             if not start:
@@ -176,19 +262,26 @@ class ChaseCLI(BaseCLI):
             if not end:
                 end = latest
 
+        # Determine the number of months covered.
         nmonths = self._months_between(start, end)
-        if self.options.barchart or self.options.piechart:
-            _start = strftime("%Y-%m-%d", localtime(start))
-            _end = strftime("%Y-%m-%d", localtime(end))
-            chase.chart_title_date = f"over {nmonths} Months from {_start} to {_end}"
 
-        # Print report.
-        if self.options.monthly:
+        # Output.
+        if self.charting:
+            chart = Chart(chase, nmonths, start, end)
+
+            if self.options.monthly:
+                # Needed to analyze the data.
+                chase.print_monthly_report(nmonths)
+
+            if self.options.category:
+                chart.display_monthly_category()
+            elif self.options.averages_only:
+                chart.display_monthly_averages()
+            else:
+                chart.display_category_totals()
+
+        elif self.options.monthly:
             chase.print_monthly_report(nmonths)
-        elif self.options.barchart:
-            chase.display_barchart_category_totals()
-        elif self.options.piechart:
-            chase.display_piechart_category_totals()
         else:
             chase.print_report()
 
