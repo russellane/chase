@@ -66,22 +66,21 @@ Process downloaded Chase Bank transaction files.
 
 #### Category Totals Chart
   Plot the Total amount spent on each category across the date-range,
-  in descending order of the amount spent on the category.  This is
-  the representation of the Category/Merchant Report with the
-  `--totals-only` option.  Use `--barchart` or `--piechart`
-  to display this chart.
+  in descending order of the amount spent on each category.  This is a
+  visualization of the Category/Merchant Report with `--totals-only`.
+  Use `--barchart` or `--piechart` to display this chart.
 
 #### Monthly Averages Chart
   Plot the Average amount spent on each category per month, in
-  descending order of the amount spent on the category.  This is
-  the representation of the Category Monthly Report with the
-  `--averages-only` option.  Use `--barchart` or `--piechart`, along
-  with the `--monthly` or `--averages-only` option to display this chart.
+  descending order of the amount spent on each category.  This is a
+  visualization of the Category Monthly Report with `--averages-only`.
+  Use `--barchart` or `--piechart`, along with `--monthly` or
+  `--averages-only`, to display this chart.
 
 #### Monthly Category Chart
   Plot the Amount spent each month on a given category.  Use
-  `--barchart` or `--piechart`, along with the `--category CATEGORY`
-  option to display this chart.
+  `--barchart` or `--piechart`, along with `--category CATEGORY`,
+  to display this chart.
 
 #### General options
     -h, --help          Show this help message and exit.
