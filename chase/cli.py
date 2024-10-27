@@ -2,10 +2,11 @@
 
 from glob import glob
 from pathlib import Path
-from time import localtime, mktime, strftime, strptime
+from time import localtime, mktime, strptime
 
 from libcli import BaseCLI
 
+from chase.chart import Chart
 from chase.chase import Chase
 
 __all__ = ["ChaseCLI"]
@@ -182,12 +183,17 @@ class ChaseCLI(BaseCLI):
             help="CSV files to process",
         )
 
+    @property
+    def charting(self) -> bool:
+        """Return True if `--barchart` or `--piechart`."""
+        return bool(self.options.barchart or self.options.piechart)
+
     def main(self) -> None:
         """Command line interface entry point (method)."""
 
         # pylint: disable=too-many-branches
 
-        if self.options.barchart or self.options.piechart:
+        if self.charting:
             if self.options.category:
                 self.options.monthly = True
             if self.options.monthly:
@@ -214,30 +220,26 @@ class ChaseCLI(BaseCLI):
                 start = earliest
             if not end:
                 end = latest
-
         nmonths = self._months_between(start, end)
-        if self.options.barchart or self.options.piechart:
-            _start = strftime("%Y-%m-%d", localtime(start))
-            _end = strftime("%Y-%m-%d", localtime(end))
-            chase.chart_title_date = f"over {nmonths} Months from {_start} to {_end}"
 
-        # Print report.
-        if self.options.monthly:
-            chase.print_monthly_report(nmonths)
+        if self.charting:
+            chart = Chart(chase, nmonths, start, end)
+
+            if self.options.monthly:
+                # Needed to analyze the data.
+                chase.print_monthly_report(nmonths)
+
             if self.options.category:
-                if self.options.barchart:
-                    chase.display_barchart_monthly_category()
-                elif self.options.piechart:
-                    chase.display_piechart_monthly_category()
+                chart.display_monthly_category()
+
             elif self.options.averages_only:
-                if self.options.barchart:
-                    chase.display_barchart_monthly_averages()
-                elif self.options.piechart:
-                    chase.display_piechart_monthly_averages()
-        elif self.options.barchart:
-            chase.display_barchart_category_totals()
-        elif self.options.piechart:
-            chase.display_piechart_category_totals()
+                chart.display_monthly_averages()
+
+            else:
+                chart.display_category_totals()
+
+        elif self.options.monthly:
+            chase.print_monthly_report(nmonths)
         else:
             chase.print_report()
 
