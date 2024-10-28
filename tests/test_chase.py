@@ -1,6 +1,8 @@
 import subprocess
 import sys
 
+import pytest
+
 from chase.cli import ChaseCLI
 
 
@@ -26,6 +28,12 @@ def run_cli(options: list[str]) -> None:
         sys.argv += options
     print(f"\nRunning {sys.argv!r}", flush=True)
     ChaseCLI().main()
+
+
+def test_print_sample_config() -> None:
+    with pytest.raises(SystemExit) as err:
+        run_cli(["--print-sample-config"])
+    assert err.value.code == 0
 
 
 def test_file_dev_null() -> None:

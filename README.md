@@ -4,9 +4,9 @@
     chase [--totals-only] [--detail] [--monthly] [--averages-only]
           [--barchart | --piechart] [--moving-average]
           [--no-exclude-chart-categories] [-s START_DATE] [-e END_DATE]
-          [--category CATEGORY] [--no-color] [--use-datafiles] [-h] [-v]
-          [-V] [--config FILE] [--print-config] [--print-url]
-          [--completion [SHELL]]
+          [--category CATEGORY] [--no-color] [--use-datafiles]
+          [--print-sample-config] [-h] [-v] [-V] [--config FILE]
+          [--print-config] [--print-url] [--completion [SHELL]]
           [FILES ...]
     
 Process downloaded Chase Bank transaction files.
@@ -81,6 +81,27 @@ Process downloaded Chase Bank transaction files.
   Plot the Amount spent each month on a given category.  Use
   `--barchart` or `--piechart`, along with `--category CATEGORY`,
   to display this chart.
+
+#### Configuration File
+  The configuration file defines these elements:
+  
+      `datafiles` (str):  Points to the `CSV` files to process. May
+                          begin with `~`, and may contain wildcards.
+  
+      `chart_exclude_categories` (list[str]): List of categories
+                          to not plot on charts.
+  
+      `startswith_aliases` (mapping table): Map merchants that start
+                          with the left-string to the right-string.
+  
+      `in_aliases` (mapping table): Map merchants that contain
+                          the left-string to the right-string.
+  
+      `categories_by_merchant` (mapping table): Re-categorize the merchants
+                          on the left to the Categories on the right.
+
+    --print-sample-config
+                        Print a sample configuration file.
 
 #### General options
     -h, --help          Show this help message and exit.

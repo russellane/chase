@@ -224,6 +224,36 @@ class ChaseCLI(BaseCLI):
             ),
         )
 
+        group = self.parser.add_argument_group(
+            "Configuration File",
+            self.dedent(
+                """
+    The configuration file defines these elements:
+
+        `datafiles` (str):  Points to the `CSV` files to process. May
+                            begin with `~`, and may contain wildcards.
+
+        `chart_exclude_categories` (list[str]): List of categories
+                            to not plot on charts.
+
+        `startswith_aliases` (mapping table): Map merchants that start
+                            with the left-string to the right-string.
+
+        `in_aliases` (mapping table): Map merchants that contain
+                            the left-string to the right-string.
+
+        `categories_by_merchant` (mapping table): Re-categorize the merchants
+                            on the left to the Categories on the right.
+                """
+            ),
+        )
+
+        group.add_argument(
+            "--print-sample-config",
+            action="store_true",
+            help="Print a sample configuration file",
+        )
+
     @property
     def charting(self) -> bool:
         """Return True if `--barchart` or `--piechart`."""
@@ -233,6 +263,10 @@ class ChaseCLI(BaseCLI):
         """Command line interface entry point (method)."""
 
         # pylint: disable=too-many-branches
+
+        if self.options.print_sample_config:
+            self._print_sample_config()
+            self.parser.exit(0)
 
         if self.charting:
             if self.options.category:
@@ -330,6 +364,36 @@ class ChaseCLI(BaseCLI):
             start = int(mktime((st.tm_year, st.tm_mon + 1, st.tm_mday, 0, 0, 0, 0, 0, -1)))
 
         return nmonths
+
+    def _print_sample_config(self) -> None:
+
+        print(
+            self.dedent(
+                """
+    datafiles = "~/Documents/Chase/*CSV"
+
+    # Exclude these categories from charts.
+    chart_exclude_categories = [
+        # "ACH_CREDIT",
+        # "ACH_DEBIT",
+    ]
+
+    # Normalize merchants that start with...
+    [startswith_aliases]
+    # "AMZN Mktp US" = "AMZN Mktp US"
+    # "NETFLIX  INC." = "NETFLIX.COM"
+
+    # Normalize merchants that contain...
+    [in_aliases]
+    # "To The Northern Trust Co" = "Payment To The Northern Trust Co"
+
+    # Re-categorize these merchants...
+    [categories_by_merchant]
+    # "APS electric pmt PAYMENTS" = "Bills & Utilities"
+    # "CIRCLE K # 09529" = "Groceries"
+            """
+            )
+        )
 
 
 def main(args: list[str] | None = None) -> None:
