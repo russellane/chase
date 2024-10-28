@@ -1,6 +1,8 @@
 import subprocess
 import sys
 
+import pytest
+
 from chase.cli import ChaseCLI
 
 
@@ -28,12 +30,22 @@ def run_cli(options: list[str]) -> None:
     ChaseCLI().main()
 
 
+def test_print_sample_config() -> None:
+    with pytest.raises(SystemExit) as err:
+        run_cli(["--print-sample-config"])
+    assert err.value.code == 0
+
+
 def test_file_dev_null() -> None:
     run_cli(["/dev/null"])
 
 
 def test_use_datafiles_no_dates() -> None:
     run_cli(["--use-datafiles"])
+
+
+def test_use_datafiles_no_dates_category() -> None:
+    run_cli(["--use-datafiles", "--category", "Groceries"])
 
 
 def test_use_datafiles_no_dates_no_color() -> None:

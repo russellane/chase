@@ -4,9 +4,9 @@
     chase [--totals-only] [--detail] [--monthly] [--averages-only]
           [--barchart | --piechart] [--moving-average]
           [--no-exclude-chart-categories] [-s START_DATE] [-e END_DATE]
-          [--category CATEGORY] [--no-color] [--use-datafiles] [-h] [-v]
-          [-V] [--config FILE] [--print-config] [--print-url]
-          [--completion [SHELL]]
+          [--category CATEGORY] [--no-color] [--use-datafiles]
+          [--print-sample-config] [-h] [-v] [-V] [--config FILE]
+          [--print-config] [--print-url] [--completion [SHELL]]
           [FILES ...]
     
 Process downloaded Chase Bank transaction files.
@@ -66,22 +66,42 @@ Process downloaded Chase Bank transaction files.
 
 #### Category Totals Chart
   Plot the Total amount spent on each category across the date-range,
-  in descending order of the amount spent on the category.  This is
-  the representation of the Category/Merchant Report with the
-  `--totals-only` option.  Use `--barchart` or `--piechart`
-  to display this chart.
+  in descending order of the amount spent on each category.  This is a
+  visualization of the Category/Merchant Report with `--totals-only`.
+  Use `--barchart` or `--piechart` to display this chart.
 
 #### Monthly Averages Chart
   Plot the Average amount spent on each category per month, in
-  descending order of the amount spent on the category.  This is
-  the representation of the Category Monthly Report with the
-  `--averages-only` option.  Use `--barchart` or `--piechart`, along
-  with the `--monthly` or `--averages-only` option to display this chart.
+  descending order of the amount spent on each category.  This is a
+  visualization of the Category Monthly Report with `--averages-only`.
+  Use `--barchart` or `--piechart`, along with `--monthly` or
+  `--averages-only`, to display this chart.
 
 #### Monthly Category Chart
   Plot the Amount spent each month on a given category.  Use
-  `--barchart` or `--piechart`, along with the `--category CATEGORY`
-  option to display this chart.
+  `--barchart` or `--piechart`, along with `--category CATEGORY`,
+  to display this chart.
+
+#### Configuration File
+  The configuration file defines these elements:
+  
+      `datafiles` (str):  Points to the `CSV` files to process. May
+                          begin with `~`, and may contain wildcards.
+  
+      `chart_exclude_categories` (list[str]): List of categories
+                          to not plot on charts.
+  
+      `startswith_aliases` (mapping table): Map merchants that start
+                          with the left-string to the right-string.
+  
+      `in_aliases` (mapping table): Map merchants that contain
+                          the left-string to the right-string.
+  
+      `categories_by_merchant` (mapping table): Re-categorize the merchants
+                          on the left to the Categories on the right.
+
+    --print-sample-config
+                        Print a sample configuration file.
 
 #### General options
     -h, --help          Show this help message and exit.

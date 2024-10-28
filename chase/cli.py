@@ -193,10 +193,9 @@ class ChaseCLI(BaseCLI):
             self.dedent(
                 """
     Plot the Total amount spent on each category across the date-range,
-    in descending order of the amount spent on the category.  This is
-    the representation of the Category/Merchant Report with the
-    `--totals-only` option.  Use `--barchart` or `--piechart`
-    to display this chart.
+    in descending order of the amount spent on each category.  This is a
+    visualization of the Category/Merchant Report with `--totals-only`.
+    Use `--barchart` or `--piechart` to display this chart.
                 """
             ),
         )
@@ -206,10 +205,10 @@ class ChaseCLI(BaseCLI):
             self.dedent(
                 """
     Plot the Average amount spent on each category per month, in
-    descending order of the amount spent on the category.  This is
-    the representation of the Category Monthly Report with the
-    `--averages-only` option.  Use `--barchart` or `--piechart`, along
-    with the `--monthly` or `--averages-only` option to display this chart.
+    descending order of the amount spent on each category.  This is a
+    visualization of the Category Monthly Report with `--averages-only`.
+    Use `--barchart` or `--piechart`, along with `--monthly` or
+    `--averages-only`, to display this chart.
                 """
             ),
         )
@@ -219,10 +218,40 @@ class ChaseCLI(BaseCLI):
             self.dedent(
                 """
     Plot the Amount spent each month on a given category.  Use
-    `--barchart` or `--piechart`, along with the `--category CATEGORY`
-    option to display this chart.
+    `--barchart` or `--piechart`, along with `--category CATEGORY`,
+    to display this chart.
                 """
             ),
+        )
+
+        group = self.parser.add_argument_group(
+            "Configuration File",
+            self.dedent(
+                """
+    The configuration file defines these elements:
+
+        `datafiles` (str):  Points to the `CSV` files to process. May
+                            begin with `~`, and may contain wildcards.
+
+        `chart_exclude_categories` (list[str]): List of categories
+                            to not plot on charts.
+
+        `startswith_aliases` (mapping table): Map merchants that start
+                            with the left-string to the right-string.
+
+        `in_aliases` (mapping table): Map merchants that contain
+                            the left-string to the right-string.
+
+        `categories_by_merchant` (mapping table): Re-categorize the merchants
+                            on the left to the Categories on the right.
+                """
+            ),
+        )
+
+        group.add_argument(
+            "--print-sample-config",
+            action="store_true",
+            help="Print a sample configuration file",
         )
 
     @property
@@ -234,6 +263,10 @@ class ChaseCLI(BaseCLI):
         """Command line interface entry point (method)."""
 
         # pylint: disable=too-many-branches
+
+        if self.options.print_sample_config:
+            self._print_sample_config()
+            self.parser.exit(0)
 
         if self.charting:
             if self.options.category:
@@ -331,6 +364,36 @@ class ChaseCLI(BaseCLI):
             start = int(mktime((st.tm_year, st.tm_mon + 1, st.tm_mday, 0, 0, 0, 0, 0, -1)))
 
         return nmonths
+
+    def _print_sample_config(self) -> None:
+
+        print(
+            self.dedent(
+                """
+    datafiles = "~/Documents/Chase/*CSV"
+
+    # Exclude these categories from charts.
+    chart_exclude_categories = [
+        # "ACH_CREDIT",
+        # "ACH_DEBIT",
+    ]
+
+    # Normalize merchants that start with...
+    [startswith_aliases]
+    # "AMZN Mktp US" = "AMZN Mktp US"
+    # "NETFLIX  INC." = "NETFLIX.COM"
+
+    # Normalize merchants that contain...
+    [in_aliases]
+    # "To The Northern Trust Co" = "Payment To The Northern Trust Co"
+
+    # Re-categorize these merchants...
+    [categories_by_merchant]
+    # "APS electric pmt PAYMENTS" = "Bills & Utilities"
+    # "CIRCLE K # 09529" = "Groceries"
+            """
+            )
+        )
 
 
 def main(args: list[str] | None = None) -> None:
