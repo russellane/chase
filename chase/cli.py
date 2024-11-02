@@ -17,6 +17,8 @@ class ChaseCLI(BaseCLI):
 
     config = {
         "config-file": "~/.chase.toml",
+        # distribution name, not importable package name
+        "dist-name": "rlane-chase",
     }
 
     def init_parser(self) -> None:

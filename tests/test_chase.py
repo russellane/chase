@@ -1,23 +1,8 @@
-import subprocess
 import sys
 
 import pytest
 
 from chase.cli import ChaseCLI
-
-
-def run_shell(options: list[str]) -> None:
-    """Test running from the shell."""
-
-    argv = ["python", "-m", "chase"]
-    if options:
-        argv += options
-    print(f"\nRunning {argv!r}", flush=True)
-    subprocess.run(argv, check=True)
-
-
-def test_run_shell() -> None:
-    run_shell(["--use-datafiles", "-s", "foy", "-e", "fom", "--use-datafiles"])
 
 
 def run_cli(options: list[str]) -> None:

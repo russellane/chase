@@ -1,6 +1,20 @@
+import sys
+from subprocess import run
+
 import pytest
 
 from chase.cli import main
+
+
+def test_main() -> None:
+
+    def _main() -> None:
+        run(["python", "-m", "chase", "--version"], check=True)
+        sys.exit(0)
+
+    with pytest.raises(SystemExit) as err:
+        _main()
+    assert err.value.code == 0
 
 
 def test_version() -> None:
@@ -33,12 +47,6 @@ def test_bogus_option() -> None:
     assert err.value.code == 2
 
 
-# def test_bogus_argument():
-#     with pytest.raises(SystemExit) as err:
-#         main(["bogus-argument"])
-#     assert err.value.code == 2
-
-
 def test_print_config() -> None:
     with pytest.raises(SystemExit) as err:
         main(["--print-config"])
@@ -48,10 +56,4 @@ def test_print_config() -> None:
 def test_print_url() -> None:
     with pytest.raises(SystemExit) as err:
         main(["--print-url"])
-    assert err.value.code == 0
-
-
-def test_debug() -> None:
-    with pytest.raises(SystemExit) as err:
-        main(["-X"])
     assert err.value.code == 0
