@@ -43,12 +43,11 @@ Process downloaded Chase Bank transaction files.
                         in the config file (default: `False`).
 
 #### Filtering options
-    -s START_DATE, --start START_DATE
+    -s, --start START_DATE
                         Print transactions at or after `START_DATE`
                         (inclusive) (YYYY-MM-DD). Defaults to the epoch. Use
                         `foy` to specify the first of this year.
-    -e END_DATE, --end END_DATE
-                        Print transactions prior to `END_DATE` (exclusive)
+    -e, --end END_DATE  Print transactions prior to `END_DATE` (exclusive)
                         (YYYY-MM-DD). Defaults to the end of time. Use `fom`
                         to specify the first of this month.
     --category CATEGORY

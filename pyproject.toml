@@ -1,6 +1,6 @@
 [project]
 name = "rlane-chase"
-version = "1.0.3"
+version = "1.0.4"
 description = "Process Chase Bank transaction files"
 authors = [
     {name = "Russel Lane", email = "russel@rlane.com"},
@@ -9,7 +9,7 @@ license = {text = "MIT"}
 readme = "README.md"
 keywords = ["chase", "python", "banking", "checking", "credit-cards", "graphs",]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -18,9 +18,9 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "matplotlib>=3.9.2",
-    "numpy>=2.1.2",
+    "numpy>=2.1.3",
     "pandas>=2.2.3",
-    "rlane-libcli>=1.0.7",
+    "rlane-libcli>=1.0.8",
 ]
 
 [project.urls]
@@ -42,6 +42,7 @@ dev = [
     "flake8>=7.1.1",
     "isort>=5.13.2",
     "mypy>=1.13.0",
+    "pandas-stubs>=2.2.3.241009",
     "pytest-cov>=6.0.0",
     "pytest-mock>=3.14.0",
     "pytest>=8.3.3",
