@@ -21,6 +21,7 @@ dependencies = [
     "numpy>=2.1.3",
     "pandas>=2.2.3",
     "rlane-libcli>=1.0.9",
+    "textual>=0.89.0",
 ]
 
 [project.urls]
@@ -43,6 +44,7 @@ dev = [
     "isort>=5.13.2",
     "mypy>=1.13.0",
     "pandas-stubs>=2.2.3.241009",
+    "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
     "pytest-mock>=3.14.0",
     "pytest>=8.3.3",
@@ -78,6 +80,10 @@ add-ignore = [
 
 [tool.mypy]
 strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
 requires = ["pdm-backend"]

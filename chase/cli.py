@@ -8,6 +8,7 @@ from libcli import BaseCLI
 
 from chase.chart import Chart
 from chase.chase import Chase
+from chase.interactive import ChaseApp
 
 __all__ = ["ChaseCLI"]
 
@@ -162,6 +163,13 @@ class ChaseCLI(BaseCLI):
         self.add_default_to_help(arg, self.parser)
 
         arg = group.add_argument(
+            "--interactive",
+            action="store_true",
+            help="Launch interactive TUI for browsing transactions",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        arg = group.add_argument(
             "--no-color",
             action="store_true",
             help="Do not print report in color",
@@ -286,6 +294,11 @@ class ChaseCLI(BaseCLI):
         nmonths = self._months_between(start, end)
 
         # Output.
+        if self.options.interactive:
+            app = ChaseApp(chase, start, end)
+            app.run()
+            return
+
         if self.options.recurring:
             chase.print_recurring_report()
         elif self.charting:

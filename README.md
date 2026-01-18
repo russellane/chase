@@ -4,7 +4,7 @@
     chase [--totals-only] [--detail] [--monthly] [--averages-only]
           [--barchart | --piechart] [--moving-average]
           [--no-exclude-chart-categories] [-s START_DATE] [-e END_DATE]
-          [--category CATEGORY] [--recurring] [--no-color]
+          [--category CATEGORY] [--recurring] [--interactive] [--no-color]
           [--use-datafiles] [--print-sample-config] [-h] [-v] [-V]
           [--config FILE] [--print-config] [--print-url]
           [--completion [SHELL]]
@@ -59,6 +59,8 @@ Process downloaded Chase Bank transaction files.
 #### Misc options
     --recurring         Detect and report recurring transactions
                         (subscriptions) (default: `False`).
+    --interactive       Launch interactive TUI for browsing transactions
+                        (default: `False`).
     --no-color          Do not print report in color (default: `False`).
 
 #### Datafile options
