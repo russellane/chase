@@ -4,9 +4,10 @@
     chase [--totals-only] [--detail] [--monthly] [--averages-only]
           [--barchart | --piechart] [--moving-average]
           [--no-exclude-chart-categories] [-s START_DATE] [-e END_DATE]
-          [--category CATEGORY] [--no-color] [--use-datafiles]
-          [--print-sample-config] [-h] [-v] [-V] [--config FILE]
-          [--print-config] [--print-url] [--completion [SHELL]]
+          [--category CATEGORY] [--recurring] [--no-color]
+          [--use-datafiles] [--print-sample-config] [-h] [-v] [-V]
+          [--config FILE] [--print-config] [--print-url]
+          [--completion [SHELL]]
           [FILES ...]
     
 Process downloaded Chase Bank transaction files.
@@ -56,6 +57,8 @@ Process downloaded Chase Bank transaction files.
                         implied.
 
 #### Misc options
+    --recurring         Detect and report recurring transactions
+                        (subscriptions) (default: `False`).
     --no-color          Do not print report in color (default: `False`).
 
 #### Datafile options

@@ -1,4 +1,6 @@
 import sys
+import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -95,3 +97,28 @@ def test_report_detail_no_date_filter() -> None:
 def test_monthly_with_category_filter() -> None:
     """Test monthly report with category filter to cover the continue branch."""
     run_cli(["--use-datafiles", "--monthly", "--category", "Groceries"])
+
+
+def test_recurring_report() -> None:
+    """Test recurring transactions report."""
+    run_cli(["--use-datafiles", "--recurring"])
+
+
+def test_recurring_report_no_data() -> None:
+    """Test recurring report with no data (covers 'no recurring' branch)."""
+    run_cli(["/dev/null", "--recurring"])
+
+
+def test_recurring_zero_amount() -> None:
+    """Test recurring detection with zero-amount transactions (covers median==0 branch)."""
+    csv_content = """Transaction Date,Description,Category,Amount
+01/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
+02/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
+03/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
+04/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+        f.write(csv_content)
+        f.flush()
+        run_cli([f.name, "--recurring"])
+        Path(f.name).unlink()

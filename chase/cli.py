@@ -155,6 +155,13 @@ class ChaseCLI(BaseCLI):
         group = self.parser.add_argument_group("Misc options")
 
         arg = group.add_argument(
+            "--recurring",
+            action="store_true",
+            help="Detect and report recurring transactions (subscriptions)",
+        )
+        self.add_default_to_help(arg, self.parser)
+
+        arg = group.add_argument(
             "--no-color",
             action="store_true",
             help="Do not print report in color",
@@ -279,7 +286,9 @@ class ChaseCLI(BaseCLI):
         nmonths = self._months_between(start, end)
 
         # Output.
-        if self.charting:
+        if self.options.recurring:
+            chase.print_recurring_report()
+        elif self.charting:
             chart = Chart(chase, nmonths, start, end)
 
             if self.options.monthly:

@@ -290,3 +290,123 @@ class Chase:
             "average": "0;32m",  # green
         }
         return f"\033[{color_map.get(color, '0m')}{text}\033[0m"
+
+    def print_recurring_report(self) -> None:
+        """Print detected recurring transactions (subscriptions)."""
+
+        recurring = self._detect_recurring_merchants()
+
+        if not recurring:
+            print("No recurring transactions detected.")
+            return
+
+        # Sort by annual cost descending
+        recurring.sort(key=lambda x: -abs(x["annual_cost"]))
+
+        print(self.color_text("category", "Recurring Transactions (Subscriptions)"))
+        print(self.color_text("category", "-" * 50))
+        print(
+            self.color_text(
+                "subtotal",
+                f"{'Monthly':>8}  {'Amount':>10}  {'Annual Cost':>12}  Merchant",
+            )
+        )
+
+        total_annual = 0.0
+        for item in recurring:
+            count = item["count"]
+            avg_amount = item["avg_amount"]
+            annual_cost = item["annual_cost"]
+            merchant = item["merchant"]
+            total_annual += annual_cost
+
+            line = f"{count:>6}x   ${abs(avg_amount):>9.2f}   ${abs(annual_cost):>10.2f}"
+            print(self.color_text("transaction", f"{line}  {merchant}"))
+
+        print(self.color_text("category", "-" * 50))
+        print(
+            self.color_text(
+                "total",
+                f"{'':>8}  {'':>10}  ${abs(total_annual):>10.2f}  Total Annual",
+            )
+        )
+
+    def _detect_recurring_merchants(self) -> list[dict[str, Any]]:
+        """Detect merchants with recurring payment patterns.
+
+        A merchant is considered recurring if:
+        1. Appears in 3+ different months
+        2. Has consistent amounts (within 10% tolerance)
+        3. Appears roughly monthly (average interval between 20-40 days)
+
+        Returns:
+            List of dictionaries with merchant, count, avg_amount, annual_cost.
+        """
+
+        # Flatten all transactions by merchant (across categories)
+        merchants_data: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+        for category_data in self.categories.values():
+            for merchant, mdata in category_data["merchants"].items():
+                merchants_data[merchant].extend(mdata["transactions"])
+
+        recurring = []
+        for merchant, transactions in merchants_data.items():
+            result = self._analyze_merchant_recurrence(merchant, transactions)
+            if result:
+                recurring.append(result)
+
+        return recurring
+
+    def _analyze_merchant_recurrence(
+        self, merchant: str, transactions: list[dict[str, Any]]
+    ) -> dict[str, Any] | None:
+        """Analyze a merchant's transactions for recurring patterns.
+
+        Returns:
+            Dictionary with merchant info if recurring, None otherwise.
+        """
+
+        if len(transactions) < 3:
+            return None
+
+        # Extract dates and amounts
+        months: set[str] = set()
+        dates: list[int] = []
+        amounts: list[float] = []
+
+        for txn in transactions:
+            date = txn["transaction_date"]
+            dates.append(date)
+            amounts.append(abs(float(txn["Amount"])))
+            months.add(strftime("%Y-%m", localtime(date)))
+
+        # Criterion 1: Must appear in 3+ different months
+        if len(months) < 3:
+            return None
+
+        # Criterion 2: Check amount consistency (within 10% of median)
+        amounts.sort()
+        median_amount = amounts[len(amounts) // 2]
+        if median_amount == 0:
+            return None
+
+        if not all(abs(amt - median_amount) / median_amount <= 0.10 for amt in amounts):
+            return None
+
+        # Criterion 3: Check average interval is roughly monthly (20-40 days)
+        dates.sort()
+        if len(dates) >= 2:
+            intervals = [(dates[i + 1] - dates[i]) / 86400 for i in range(len(dates) - 1)]
+            avg_interval = sum(intervals) / len(intervals)
+            if avg_interval < 20 or avg_interval > 40:
+                return None
+
+        # Calculate annual cost
+        avg_amount = sum(amounts) / len(amounts)
+        return {
+            "merchant": merchant,
+            "count": len(months),
+            "avg_amount": avg_amount,
+            "annual_cost": avg_amount * 12,
+        }
