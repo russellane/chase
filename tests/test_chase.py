@@ -75,3 +75,23 @@ def test_monthly_averages_only_groceries() -> None:
             "Groceries",
         ]
     )
+
+
+def test_monthly_no_date_filter() -> None:
+    """Test monthly report without date filtering to ensure loop body is covered."""
+    run_cli(["--use-datafiles", "--monthly"])
+
+
+def test_monthly_detail_no_date_filter() -> None:
+    """Test monthly detail report to cover _print_monthly_report_merchants."""
+    run_cli(["--use-datafiles", "--monthly", "--detail"])
+
+
+def test_report_detail_no_date_filter() -> None:
+    """Test report detail without date filter to cover transaction printing."""
+    run_cli(["--use-datafiles", "--detail"])
+
+
+def test_monthly_with_category_filter() -> None:
+    """Test monthly report with category filter to cover the continue branch."""
+    run_cli(["--use-datafiles", "--monthly", "--category", "Groceries"])

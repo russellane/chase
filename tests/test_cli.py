@@ -57,3 +57,13 @@ def test_print_url() -> None:
     with pytest.raises(SystemExit) as err:
         main(["--print-url"])
     assert err.value.code == 0
+
+
+def test_main_module() -> None:
+    """Test running as `python -m chase` covers __main__.py."""
+    import runpy
+
+    sys.argv = ["chase", "--version"]
+    with pytest.raises(SystemExit) as err:
+        runpy.run_module("chase", run_name="__main__", alter_sys=True)
+    assert err.value.code == 0

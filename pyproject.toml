@@ -20,7 +20,7 @@ dependencies = [
     "matplotlib>=3.9.2",
     "numpy>=2.1.3",
     "pandas>=2.2.3",
-    "rlane-libcli>=1.0.8",
+    "rlane-libcli>=1.0.9",
 ]
 
 [project.urls]

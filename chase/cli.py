@@ -26,11 +26,9 @@ class ChaseCLI(BaseCLI):
 
         self.ArgumentParser(
             prog=__package__,
-            description=self.dedent(
-                """
+            description=self.dedent("""
     Process downloaded Chase Bank transaction files.
-                """
-            ),
+                """),
         )
 
     def add_arguments(self) -> None:
@@ -38,15 +36,13 @@ class ChaseCLI(BaseCLI):
 
         group = self.parser.add_argument_group(
             "Category/Merchant Report",
-            self.dedent(
-                """
+            self.dedent("""
     By default, `%(prog)s` prints the Category/Merchant Report:
 
     List each Category, in descending order of the amount spent on each
     category.  Within each Category, list each Merchant, in descending
     order of the amount spent on each Merchant.
-                """
-            ),
+                """),
         )
 
         arg = group.add_argument(
@@ -65,13 +61,11 @@ class ChaseCLI(BaseCLI):
 
         group = self.parser.add_argument_group(
             "Category Monthly Report",
-            self.dedent(
-                """
+            self.dedent("""
     List each Category, in descending order of the amount spent on each
     category.  Within each Category, list each Month, and the amount
     spent on the category that month.
-                """
-            ),
+                """),
         )
 
         arg = group.add_argument(
@@ -119,12 +113,10 @@ class ChaseCLI(BaseCLI):
         arg = group.add_argument(
             "--no-exclude-chart-categories",
             action="store_true",
-            help=self.dedent(
-                """
+            help=self.dedent("""
     Do not exclude select categories for charts. The categories are
     listed under `chart_exclude_categories` in the config file.
-                """
-            ),
+                """),
         )
         self.add_default_to_help(arg, self.parser)
 
@@ -134,35 +126,29 @@ class ChaseCLI(BaseCLI):
             "-s",
             "--start",
             dest="start_date",
-            help=self.dedent(
-                """
+            help=self.dedent("""
     Print transactions at or after `START_DATE` (inclusive)
     (YYYY-MM-DD). Defaults to the epoch. Use `foy` to specify
     the first of this year.
-                """
-            ),
+                """),
         )
         group.add_argument(
             "-e",
             "--end",
             dest="end_date",
-            help=self.dedent(
-                """
+            help=self.dedent("""
     Print transactions prior to `END_DATE` (exclusive) (YYYY-MM-DD).
     Defaults to the end of time. Use `fom` to specify the first of
     this month.
-                """
-            ),
+                """),
         )
 
         arg = group.add_argument(
             "--category",
-            help=self.dedent(
-                """
+            help=self.dedent("""
     Limit transactions to `CATEGORY`. If `--barchart` or `--piechart`
     are also given, then `--monthly` is implied.
-                """
-            ),
+                """),
         )
         self.add_default_to_help(arg, self.parser)
 
@@ -192,44 +178,37 @@ class ChaseCLI(BaseCLI):
 
         group = self.parser.add_argument_group(
             "Category Totals Chart",
-            self.dedent(
-                """
+            self.dedent("""
     Plot the Total amount spent on each category across the date-range,
     in descending order of the amount spent on each category.  This is a
     visualization of the Category/Merchant Report with `--totals-only`.
     Use `--barchart` or `--piechart` to display this chart.
-                """
-            ),
+                """),
         )
 
         group = self.parser.add_argument_group(
             "Monthly Averages Chart",
-            self.dedent(
-                """
+            self.dedent("""
     Plot the Average amount spent on each category per month, in
     descending order of the amount spent on each category.  This is a
     visualization of the Category Monthly Report with `--averages-only`.
     Use `--barchart` or `--piechart`, along with `--monthly` or
     `--averages-only`, to display this chart.
-                """
-            ),
+                """),
         )
 
         group = self.parser.add_argument_group(
             "Monthly Category Chart",
-            self.dedent(
-                """
+            self.dedent("""
     Plot the Amount spent each month on a given category.  Use
     `--barchart` or `--piechart`, along with `--category CATEGORY`,
     to display this chart.
-                """
-            ),
+                """),
         )
 
         group = self.parser.add_argument_group(
             "Configuration File",
-            self.dedent(
-                """
+            self.dedent("""
     The configuration file defines these elements:
 
         `datafiles` (str):  Points to the `CSV` files to process. May
@@ -246,8 +225,7 @@ class ChaseCLI(BaseCLI):
 
         `categories_by_merchant` (mapping table): Re-categorize the merchants
                             on the left to the Categories on the right.
-                """
-            ),
+                """),
         )
 
         group.add_argument(
@@ -369,9 +347,7 @@ class ChaseCLI(BaseCLI):
 
     def _print_sample_config(self) -> None:
 
-        print(
-            self.dedent(
-                """
+        print(self.dedent("""
     datafiles = "~/Documents/Chase/*CSV"
 
     # Exclude these categories from charts.
@@ -393,9 +369,7 @@ class ChaseCLI(BaseCLI):
     [categories_by_merchant]
     # "APS electric pmt PAYMENTS" = "Bills & Utilities"
     # "CIRCLE K # 09529" = "Groceries"
-            """
-            )
-        )
+            """))
 
 
 def main(args: list[str] | None = None) -> None:

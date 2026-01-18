@@ -45,3 +45,11 @@ def test_piechart_monthly_averages_only(matplotlib: str) -> None:
 def test_piechart_monthly_groceries(matplotlib: str) -> None:
     _ = matplotlib  # unused-argument
     run(["--monthly", "--category", "Groceries"])
+
+
+def test_piechart_category_totals_no_date_filter(matplotlib: str) -> None:
+    """Test piechart category totals without date filter to cover _get_category_totals."""
+    _ = matplotlib  # unused-argument
+    sys.argv = ["chase", "--piechart", "--use-datafiles", "--no-exclude-chart-categories"]
+    print(f"Running {sys.argv!r}")
+    ChaseCLI().main()
