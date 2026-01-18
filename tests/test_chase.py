@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from chase.cli import ChaseCLI
+from chase.cli import main
 
 
 def run_cli(options: list[str]) -> None:
@@ -12,7 +12,7 @@ def run_cli(options: list[str]) -> None:
     if options:
         sys.argv += options
     print(f"\nRunning {sys.argv!r}", flush=True)
-    ChaseCLI().main()
+    main()
 
 
 def test_print_sample_config() -> None:
