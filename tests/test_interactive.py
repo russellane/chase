@@ -7,7 +7,7 @@ from time import mktime, strptime
 import pytest
 from pytest_mock.plugin import MockerFixture
 
-from chase.chase import Chase
+from chase.chase import CategoryData, Chase, MerchantData
 from chase.interactive import (
     CategoryList,
     ChaseApp,
@@ -35,28 +35,54 @@ def fixture_mock_chase() -> Chase:
     date2 = int(mktime(strptime("2024-01-20", "%Y-%m-%d")))
     date3 = int(mktime(strptime("2024-02-10", "%Y-%m-%d")))
 
-    chase.categories["Groceries"]["total"] = -150.00
-    chase.categories["Groceries"]["count"] = 3
-    chase.categories["Groceries"]["merchants"]["TRADER JOES"]["total"] = -100.00
-    chase.categories["Groceries"]["merchants"]["TRADER JOES"]["count"] = 2
-    chase.categories["Groceries"]["merchants"]["TRADER JOES"]["transactions"] = [
-        {"transaction_date": date1, "Amount": "-45.67", "Description": "TRADER JOES #123"},
-        {"transaction_date": date2, "Amount": "-54.33", "Description": "TRADER JOES #456"},
-    ]
-    chase.categories["Groceries"]["merchants"]["WHOLE FOODS"]["total"] = -50.00
-    chase.categories["Groceries"]["merchants"]["WHOLE FOODS"]["count"] = 1
-    chase.categories["Groceries"]["merchants"]["WHOLE FOODS"]["transactions"] = [
-        {"transaction_date": date3, "Amount": "-50.00", "Description": "WHOLE FOODS MARKET"},
-    ]
+    chase.categories["Groceries"] = CategoryData(
+        total=-150.00,
+        count=3,
+        merchants={
+            "TRADER JOES": MerchantData(
+                total=-100.00,
+                count=2,
+                transactions=[
+                    {
+                        "transaction_date": date1,
+                        "Amount": "-45.67",
+                        "Description": "TRADER JOES #123",
+                    },
+                    {
+                        "transaction_date": date2,
+                        "Amount": "-54.33",
+                        "Description": "TRADER JOES #456",
+                    },
+                ],
+            ),
+            "WHOLE FOODS": MerchantData(
+                total=-50.00,
+                count=1,
+                transactions=[
+                    {
+                        "transaction_date": date3,
+                        "Amount": "-50.00",
+                        "Description": "WHOLE FOODS MARKET",
+                    },
+                ],
+            ),
+        },
+    )
 
-    chase.categories["Gas"]["total"] = -80.00
-    chase.categories["Gas"]["count"] = 2
-    chase.categories["Gas"]["merchants"]["SHELL"]["total"] = -80.00
-    chase.categories["Gas"]["merchants"]["SHELL"]["count"] = 2
-    chase.categories["Gas"]["merchants"]["SHELL"]["transactions"] = [
-        {"transaction_date": date1, "Amount": "-40.00", "Description": "SHELL OIL"},
-        {"transaction_date": date2, "Amount": "-40.00", "Description": "SHELL GAS"},
-    ]
+    chase.categories["Gas"] = CategoryData(
+        total=-80.00,
+        count=2,
+        merchants={
+            "SHELL": MerchantData(
+                total=-80.00,
+                count=2,
+                transactions=[
+                    {"transaction_date": date1, "Amount": "-40.00", "Description": "SHELL OIL"},
+                    {"transaction_date": date2, "Amount": "-40.00", "Description": "SHELL GAS"},
+                ],
+            ),
+        },
+    )
 
     return chase
 

@@ -65,7 +65,7 @@ class Chart:
 
         for category, cdata in sorted(
             self.chase.categories.items(),
-            key=lambda x: -abs(x[1]["total"]),
+            key=lambda x: -abs(x[1].total),
         ):
             if self._is_excluded_from_charts(category):
                 continue
@@ -73,12 +73,12 @@ class Chart:
             print(
                 self.chase.color_text(
                     "total",
-                    f"{cdata['total']:10.2f} {cdata['count']:10} Total {category}",
+                    f"{cdata.total:10.2f} {cdata.count:10} Total {category}",
                 )
             )
 
             categories.append(category)
-            totals.append(round(cdata["total"] * -1))
+            totals.append(round(cdata.total * -1))
 
         return categories, totals
 
@@ -118,7 +118,7 @@ class Chart:
 
         for category, cdata in sorted(
             self.chase.categories.items(),
-            key=lambda x: -abs(x[1]["monthly_average"]),
+            key=lambda x: -abs(x[1].monthly_average),
         ):
             if self._is_excluded_from_charts(category):
                 continue
@@ -126,12 +126,12 @@ class Chart:
             print(
                 self.chase.color_text(
                     "total",
-                    f"{cdata['monthly_average']:10.2f} Monthly Average {category}",
+                    f"{cdata.monthly_average:10.2f} Monthly Average {category}",
                 )
             )
 
             categories.append(category)
-            averages.append(round(cdata["monthly_average"] * -1))
+            averages.append(round(cdata.monthly_average * -1))
 
         return categories, averages
 
@@ -168,11 +168,14 @@ class Chart:
     def _get_monthly_totals(self, category: str) -> tuple[list[str], list[int]]:
         """Return list of months, and list of associated monthly totals, for given `category`."""
 
-        cdata = self.chase.categories[category]
+        cdata = self.chase.categories.get(category)
+        if cdata is None:
+            return [], []
+
         months = []
         totals = []
 
-        for month, total in sorted(cdata["monthly_totals"].items()):
+        for month, total in sorted(cdata.monthly_totals.items()):
 
             months.append(month)
             totals.append(round(total * -1))

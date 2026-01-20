@@ -332,8 +332,8 @@ class ChaseCLI(BaseCLI):
 
         earliest, latest = 0, 0
         for category_data in chase.categories.values():
-            for merchant_data in category_data["merchants"].values():
-                for row in merchant_data["transactions"]:
+            for merchant_data in category_data.merchants.values():
+                for row in merchant_data.transactions:
                     date = row["transaction_date"]
                     if not earliest or earliest > date:
                         earliest = date

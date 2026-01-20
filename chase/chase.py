@@ -6,10 +6,32 @@ from __future__ import annotations
 import csv
 from argparse import Namespace
 from collections import defaultdict
+from dataclasses import dataclass, field
 from time import localtime, mktime, strftime, strptime, time
 from typing import Any
 
-__all__ = ["Chase"]
+__all__ = ["Chase", "CategoryData", "MerchantData"]
+
+
+@dataclass
+class MerchantData:
+    """Data for a single merchant within a category."""
+
+    total: float = 0.0
+    count: int = 0
+    transactions: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
+class CategoryData:
+    """Data for a single category."""
+
+    total: float = 0.0
+    count: int = 0
+    merchants: dict[str, MerchantData] = field(default_factory=dict)
+    monthly_totals: dict[str, float] = field(default_factory=dict)
+    monthly_average: float = 0.0
+    monthly_avg2: float = 0.0
 
 
 class Chase:
@@ -40,22 +62,7 @@ class Chase:
             self.chart_exclude_categories = []
 
         #
-        self.categories: dict[str, dict[str, Any]] = defaultdict(
-            lambda: {  # key=category
-                "total": 0,
-                "count": 0,
-                "merchants": defaultdict(
-                    lambda: {  # key=merchant
-                        "total": 0,
-                        "count": 0,
-                        "transactions": [],
-                    }
-                ),
-                "monthly_totals": defaultdict(float),  # key="YYYY-MM"
-                "monthly_average": 0,
-                "monthly_avg2": 0,
-            }
-        )
+        self.categories: dict[str, CategoryData] = {}
         self.filenames_by_row: dict[str, str] = {}
         self.chart_title_date: str | None = None
 
@@ -64,7 +71,7 @@ class Chase:
 
         for category, cdata in sorted(
             self.categories.items(),
-            key=lambda x: -abs(x[1]["total"]),
+            key=lambda x: -abs(x[1].total),
         ):
 
             if self.options.category is not None and self.options.category != category:
@@ -78,20 +85,20 @@ class Chase:
             print(
                 self.color_text(
                     "total",
-                    f"{cdata['total']:10.2f} {cdata['count']:10} Total {category}",
+                    f"{cdata.total:10.2f} {cdata.count:10} Total {category}",
                 )
             )
 
-    def _print_report_merchants(self, cdata: dict[str, Any]) -> None:
+    def _print_report_merchants(self, cdata: CategoryData) -> None:
         """Print the count and total of each merchant within `cdata`."""
 
         for merchant, mdata in sorted(
-            cdata["merchants"].items(),
-            key=lambda x: -abs(x[1]["total"]),
+            cdata.merchants.items(),
+            key=lambda x: -abs(x[1].total),
         ):
             if self.options.detail:
                 for row in sorted(
-                    mdata["transactions"],
+                    mdata.transactions,
                     key=lambda x: x.get("transaction_date"),
                 ):
                     amount = float(row["Amount"])
@@ -102,7 +109,7 @@ class Chase:
             print(
                 self.color_text(
                     "subtotal",
-                    f"{mdata['total']:10.2f} {mdata['count']:10} {merchant}",
+                    f"{mdata.total:10.2f} {mdata.count:10} {merchant}",
                 )
             )
 
@@ -111,7 +118,7 @@ class Chase:
 
         for category, cdata in sorted(
             self.categories.items(),
-            key=lambda x: -abs(x[1]["total"]),
+            key=lambda x: -abs(x[1].total),
         ):
 
             if self.options.category is not None and self.options.category != category:
@@ -121,8 +128,8 @@ class Chase:
             if not self.options.averages_only:
                 print(self.color_text("category", f"{' ' + category:->80}"))
 
-            monthly_totals = cdata["monthly_totals"]
-            category_total = 0
+            monthly_totals = cdata.monthly_totals
+            category_total = 0.0
             months = sorted(monthly_totals.keys())
 
             for month in months:
@@ -140,7 +147,7 @@ class Chase:
                 )
 
             avg = category_total / nmonths
-            cdata["monthly_average"] = avg
+            cdata.monthly_average = avg
             print(
                 self.color_text(
                     "average",
@@ -150,7 +157,7 @@ class Chase:
 
             _nmonths = len(months)
             avg = category_total / _nmonths
-            cdata["monthly_avg2"] = avg
+            cdata.monthly_avg2 = avg
             if not self.options.averages_only:
                 print(
                     self.color_text(
@@ -162,14 +169,14 @@ class Chase:
             if self.options.detail and not self.options.averages_only:
                 self._print_monthly_report_merchants(cdata)
 
-    def _print_monthly_report_merchants(self, cdata: dict[str, Any]) -> None:
+    def _print_monthly_report_merchants(self, cdata: CategoryData) -> None:
         """Print the count and total of each merchant within a `category`."""
 
         for merchant, mdata in sorted(
-            cdata["merchants"].items(),
-            key=lambda x: x[1]["total"],
+            cdata.merchants.items(),
+            key=lambda x: x[1].total,
         ):
-            print(f"{mdata['total']:18.2f} {mdata['count']:5d} {merchant}")
+            print(f"{mdata.total:18.2f} {mdata.count:5d} {merchant}")
 
     def read_input_files(
         self,
@@ -240,17 +247,19 @@ class Chase:
                 merchant, row.get("Category", row.get("Type", "<None>"))
             )
 
-            cdata = self.categories[category]
+            cdata = self.categories.setdefault(category, CategoryData())
             amount = float(row["Amount"])
 
-            cdata["total"] += amount
-            cdata["count"] += 1
-            cdata["merchants"][merchant]["total"] += amount
-            cdata["merchants"][merchant]["count"] += 1
-            cdata["merchants"][merchant]["transactions"].append(row)
+            cdata.total += amount
+            cdata.count += 1
+
+            mdata = cdata.merchants.setdefault(merchant, MerchantData())
+            mdata.total += amount
+            mdata.count += 1
+            mdata.transactions.append(row)
 
             month = strftime("%Y-%m", localtime(date))
-            cdata["monthly_totals"][month] += amount
+            cdata.monthly_totals[month] = cdata.monthly_totals.get(month, 0.0) + amount
 
     def _normalize_merchant(self, merchant: str) -> str:
         """Map aliases to normalized merchants."""
@@ -400,8 +409,8 @@ class Chase:
         merchants_data: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         for category_data in self.categories.values():
-            for merchant, mdata in category_data["merchants"].items():
-                merchants_data[merchant].extend(mdata["transactions"])
+            for merchant, mdata in category_data.merchants.items():
+                merchants_data[merchant].extend(mdata.transactions)
 
         recurring = []
         for merchant, transactions in merchants_data.items():

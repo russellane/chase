@@ -11,7 +11,7 @@ from textual.containers import Container, Horizontal
 from textual.widgets import DataTable, Footer, Header, ListItem, ListView, Static
 
 if TYPE_CHECKING:
-    from chase.chase import Chase
+    from chase.chase import CategoryData, Chase, MerchantData
 
 __all__ = ["ChaseApp"]
 
@@ -21,22 +21,22 @@ class CategoryList(ListView):
 
     BORDER_TITLE = "Categories"
 
-    def __init__(self, categories: dict[str, dict[str, Any]]) -> None:
+    def __init__(self, categories: dict[str, "CategoryData"]) -> None:
         """Initialize category list."""
 
         super().__init__()
         self._categories = categories
-        self._sorted_categories: list[tuple[str, dict[str, Any]]] = []
+        self._sorted_categories: list[tuple[str, "CategoryData"]] = []
 
     def on_mount(self) -> None:
         """Populate the list when mounted."""
 
         self._sorted_categories = sorted(
             self._categories.items(),
-            key=lambda x: -abs(x[1]["total"]),
+            key=lambda x: -abs(x[1].total),
         )
         for category, cdata in self._sorted_categories:
-            total = cdata["total"]
+            total = cdata.total
             label = f"{category[:18]:<18} ${abs(total):>10,.2f}"
             self.append(ListItem(Static(label)))
 
@@ -52,11 +52,11 @@ class CategoryList(ListView):
 
         return len(self._sorted_categories) > 0
 
-    def get_first_category_merchants(self) -> dict[str, dict[str, Any]]:
+    def get_first_category_merchants(self) -> dict[str, "MerchantData"]:
         """Return merchants for the first category."""
 
         if self._sorted_categories:
-            return dict(self._sorted_categories[0][1]["merchants"])
+            return dict(self._sorted_categories[0][1].merchants)
         return {}
 
 
@@ -69,19 +69,19 @@ class MerchantList(ListView):
         """Initialize merchant list."""
 
         super().__init__()
-        self._merchants: list[tuple[str, dict[str, Any]]] = []
+        self._merchants: list[tuple[str, "MerchantData"]] = []
 
-    def update_merchants(self, merchants: dict[str, dict[str, Any]]) -> None:
+    def update_merchants(self, merchants: dict[str, "MerchantData"]) -> None:
         """Update the merchant list for a selected category."""
 
         self.clear()
         self._merchants = sorted(
             merchants.items(),
-            key=lambda x: -abs(x[1]["total"]),
+            key=lambda x: -abs(x[1].total),
         )
         for merchant, mdata in self._merchants:
-            total = mdata["total"]
-            count = mdata["count"]
+            total = mdata.total
+            count = mdata.count
             label = f"{merchant[:18]:<18} ${abs(total):>8,.2f} ({count})"
             self.append(ListItem(Static(label)))
 
@@ -99,7 +99,7 @@ class MerchantList(ListView):
         """Return transactions for the selected merchant."""
 
         if self.index is not None and 0 <= self.index < len(self._merchants):
-            return list(self._merchants[self.index][1]["transactions"])
+            return list(self._merchants[self.index][1].transactions)
         return []
 
     def has_merchants(self) -> bool:
@@ -111,7 +111,7 @@ class MerchantList(ListView):
         """Return transactions for the first merchant."""
 
         if self._merchants:
-            return list(self._merchants[0][1]["transactions"])
+            return list(self._merchants[0][1].transactions)
         return []
 
 
@@ -224,7 +224,7 @@ class ChaseApp(App[None]):
         self._chase = chase
         self._start = start
         self._end = end
-        self._total = sum(cdata["total"] for cdata in chase.categories.values())
+        self._total = sum(cdata.total for cdata in chase.categories.values())
         self._category_list: CategoryList | None = None
         self._merchant_list: MerchantList | None = None
         self._transaction_table: TransactionTable | None = None
@@ -264,7 +264,7 @@ class ChaseApp(App[None]):
         if isinstance(event.list_view, CategoryList) and self._category_list:
             category = self._category_list.get_selected_category()
             if category and self._merchant_list:
-                merchants = self._chase.categories[category]["merchants"]
+                merchants = self._chase.categories[category].merchants
                 self._merchant_list.update_merchants(merchants)
                 if self._transaction_table:
                     self._transaction_table.clear()
@@ -282,7 +282,7 @@ class ChaseApp(App[None]):
         if isinstance(event.list_view, CategoryList) and self._category_list:
             category = self._category_list.get_selected_category()
             if category and self._merchant_list:
-                merchants = self._chase.categories[category]["merchants"]
+                merchants = self._chase.categories[category].merchants
                 self._merchant_list.update_merchants(merchants)
                 if self._transaction_table:
                     self._transaction_table.clear()
