@@ -109,13 +109,28 @@ def test_recurring_report_no_data() -> None:
     run_cli(["/dev/null", "--recurring"])
 
 
-def test_recurring_zero_amount() -> None:
-    """Test recurring detection with zero-amount transactions (covers median==0 branch)."""
+def test_recurring_income_excluded() -> None:
+    """Test that income (positive amounts) is excluded from recurring detection."""
     csv_content = """Transaction Date,Description,Category,Amount
-01/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
-02/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
-03/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
-04/15/2024,FREE SUBSCRIPTION,Subscriptions,0.00
+01/15/2024,SALARY DEPOSIT,Income,2000.00
+02/15/2024,SALARY DEPOSIT,Income,2000.00
+03/15/2024,SALARY DEPOSIT,Income,2000.00
+04/15/2024,SALARY DEPOSIT,Income,2000.00
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+        f.write(csv_content)
+        f.flush()
+        run_cli([f.name, "--recurring"])
+        Path(f.name).unlink()
+
+
+def test_recurring_outlier_filtering() -> None:
+    """Test recurring detection when outlier filtering leaves < 3 transactions."""
+    csv_content = """Transaction Date,Description,Category,Amount
+01/15/2024,SOME MERCHANT,Subscriptions,-100.00
+02/15/2024,SOME MERCHANT,Subscriptions,-100.00
+03/15/2024,SOME MERCHANT,Subscriptions,-500.00
+04/15/2024,SOME MERCHANT,Subscriptions,-500.00
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)

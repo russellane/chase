@@ -370,28 +370,46 @@ class Chase:
         if len(transactions) < 3:
             return None
 
-        # Extract dates and amounts
+        # Extract dates and amounts (only expenses, i.e. negative amounts)
+        txn_data: list[tuple[int, float]] = []
+        for txn in transactions:
+            raw_amount = float(txn["Amount"])
+            if raw_amount >= 0:  # Skip income/credits
+                continue
+            date = txn["transaction_date"]
+            amount = abs(raw_amount)
+            txn_data.append((date, amount))
+
+        if len(txn_data) < 3:
+            return None
+
+        # Filter out outliers: remove amounts < 50% of median
+        amounts_only = sorted([amt for _, amt in txn_data])
+        initial_median = amounts_only[len(amounts_only) // 2]
+        txn_data = [(d, a) for d, a in txn_data if a >= initial_median * 0.5]
+
+        if len(txn_data) < 3:
+            return None
+
+        # Rebuild lists after filtering
         months: set[str] = set()
         dates: list[int] = []
         amounts: list[float] = []
 
-        for txn in transactions:
-            date = txn["transaction_date"]
+        for date, amount in txn_data:
             dates.append(date)
-            amounts.append(abs(float(txn["Amount"])))
+            amounts.append(amount)
             months.add(strftime("%Y-%m", localtime(date)))
 
         # Criterion 1: Must appear in 3+ different months
         if len(months) < 3:
             return None
 
-        # Criterion 2: Check amount consistency (within 10% of median)
+        # Criterion 2: Check amount consistency (within 20% of median)
         amounts.sort()
         median_amount = amounts[len(amounts) // 2]
-        if median_amount == 0:
-            return None
 
-        if not all(abs(amt - median_amount) / median_amount <= 0.10 for amt in amounts):
+        if not all(abs(amt - median_amount) / median_amount <= 0.20 for amt in amounts):
             return None
 
         # Criterion 3: Check average interval is roughly monthly (20-40 days)
