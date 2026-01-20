@@ -6,7 +6,7 @@ from __future__ import annotations
 import csv
 from argparse import Namespace
 from collections import defaultdict
-from time import localtime, mktime, strftime, strptime
+from time import localtime, mktime, strftime, strptime, time
 from typing import Any
 
 __all__ = ["Chase"]
@@ -419,6 +419,11 @@ class Chase:
             avg_interval = sum(intervals) / len(intervals)
             if avg_interval < 20 or avg_interval > 40:
                 return None
+
+        # Criterion 4: Must have a transaction within the last 2 years
+        two_years_ago = time() - (2 * 365 * 24 * 60 * 60)
+        if dates[-1] < two_years_ago:
+            return None
 
         # Calculate annual cost
         avg_amount = sum(amounts) / len(amounts)
