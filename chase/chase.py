@@ -292,52 +292,105 @@ class Chase:
         return f"\033[{color_map.get(color, '0m')}{text}\033[0m"
 
     def print_recurring_report(self) -> None:
-        """Print detected recurring transactions (subscriptions)."""
+        """Print detected recurring transactions (subscriptions and income)."""
 
-        recurring = self._detect_recurring_merchants()
+        expenses = self._detect_recurring_merchants(income=False)
+        income = self._detect_recurring_merchants(income=True)
 
-        if not recurring:
+        if not expenses and not income:
             print("No recurring transactions detected.")
             return
 
-        # Sort by annual cost descending
-        recurring.sort(key=lambda x: -abs(x["annual_cost"]))
+        total_expenses = 0.0
+        total_income = 0.0
 
-        print(self.color_text("category", "Recurring Transactions (Subscriptions)"))
-        print(self.color_text("category", "-" * 50))
-        print(
-            self.color_text(
-                "subtotal",
-                f"{'Monthly':>8}  {'Amount':>10}  {'Annual Cost':>12}  Merchant",
+        # Print expenses section
+        if expenses:
+            expenses.sort(key=lambda x: -abs(x["annual_cost"]))
+
+            print(self.color_text("category", "Recurring Transactions (Subscriptions)"))
+            print(self.color_text("category", "-" * 50))
+            print(
+                self.color_text(
+                    "subtotal",
+                    f"{'Monthly':>8}  {'Amount':>10}  {'Annual Cost':>12}  Merchant",
+                )
             )
-        )
 
-        total_annual = 0.0
-        for item in recurring:
-            count = item["count"]
-            avg_amount = item["avg_amount"]
-            annual_cost = item["annual_cost"]
-            merchant = item["merchant"]
-            total_annual += annual_cost
+            for item in expenses:
+                count = item["count"]
+                avg_amount = item["avg_amount"]
+                annual_cost = item["annual_cost"]
+                merchant = item["merchant"]
+                total_expenses += annual_cost
 
-            line = f"{count:>6}x   ${abs(avg_amount):>9.2f}   ${abs(annual_cost):>10.2f}"
-            print(self.color_text("transaction", f"{line}  {merchant}"))
+                line = f"{count:>6}x   ${abs(avg_amount):>9.2f}   ${abs(annual_cost):>10.2f}"
+                print(self.color_text("transaction", f"{line}  {merchant}"))
 
-        print(self.color_text("category", "-" * 50))
-        print(
-            self.color_text(
-                "total",
-                f"{'':>8}  {'':>10}  ${abs(total_annual):>10.2f}  Total Annual",
+            print(self.color_text("category", "-" * 50))
+            print(
+                self.color_text(
+                    "total",
+                    f"{'':>8}  {'':>10}  ${abs(total_expenses):>10.2f}  Total Annual",
+                )
             )
-        )
 
-    def _detect_recurring_merchants(self) -> list[dict[str, Any]]:
+        # Print income section
+        if income:
+            income.sort(key=lambda x: -abs(x["annual_cost"]))
+
+            if expenses:
+                print()
+            print(self.color_text("category", "Recurring Transactions (Income)"))
+            print(self.color_text("category", "-" * 50))
+            print(
+                self.color_text(
+                    "subtotal",
+                    f"{'Monthly':>8}  {'Amount':>10}  {'Annual':>12}  Merchant",
+                )
+            )
+
+            for item in income:
+                count = item["count"]
+                avg_amount = item["avg_amount"]
+                annual_cost = item["annual_cost"]
+                merchant = item["merchant"]
+                total_income += annual_cost
+
+                line = f"{count:>6}x   ${abs(avg_amount):>9.2f}   ${abs(annual_cost):>10.2f}"
+                print(self.color_text("transaction", f"{line}  {merchant}"))
+
+            print(self.color_text("category", "-" * 50))
+            print(
+                self.color_text(
+                    "total",
+                    f"{'':>8}  {'':>10}  ${abs(total_income):>10.2f}  Total Annual",
+                )
+            )
+
+        # Print grand total
+        if expenses and income:
+            print()
+            net_annual = total_income - total_expenses
+            sign = "+" if net_annual >= 0 else "-"
+            print(
+                self.color_text(
+                    "average",
+                    f"{'':>8}  {'':>10}  {sign}${abs(net_annual):>9.2f}  Net Annual",
+                )
+            )
+
+    def _detect_recurring_merchants(self, *, income: bool = False) -> list[dict[str, Any]]:
         """Detect merchants with recurring payment patterns.
 
         A merchant is considered recurring if:
         1. Appears in 3+ different months
-        2. Has consistent amounts (within 10% tolerance)
+        2. Has consistent amounts (within 20% tolerance)
         3. Appears roughly monthly (average interval between 20-40 days)
+        4. Has a transaction within the last 2 years
+
+        Args:
+            income: If True, detect recurring income. If False, detect recurring expenses.
 
         Returns:
             List of dictionaries with merchant, count, avg_amount, annual_cost.
@@ -352,16 +405,21 @@ class Chase:
 
         recurring = []
         for merchant, transactions in merchants_data.items():
-            result = self._analyze_merchant_recurrence(merchant, transactions)
+            result = self._analyze_merchant_recurrence(merchant, transactions, income=income)
             if result:
                 recurring.append(result)
 
         return recurring
 
     def _analyze_merchant_recurrence(
-        self, merchant: str, transactions: list[dict[str, Any]]
+        self, merchant: str, transactions: list[dict[str, Any]], *, income: bool = False
     ) -> dict[str, Any] | None:
         """Analyze a merchant's transactions for recurring patterns.
+
+        Args:
+            merchant: The merchant name.
+            transactions: List of transaction dictionaries.
+            income: If True, analyze income (positive amounts). If False, analyze expenses.
 
         Returns:
             Dictionary with merchant info if recurring, None otherwise.
@@ -370,11 +428,13 @@ class Chase:
         if len(transactions) < 3:
             return None
 
-        # Extract dates and amounts (only expenses, i.e. negative amounts)
+        # Extract dates and amounts
         txn_data: list[tuple[int, float]] = []
         for txn in transactions:
             raw_amount = float(txn["Amount"])
-            if raw_amount >= 0:  # Skip income/credits
+            if income and raw_amount <= 0:  # Skip expenses when looking for income
+                continue
+            if not income and raw_amount >= 0:  # Skip income when looking for expenses
                 continue
             date = txn["transaction_date"]
             amount = abs(raw_amount)
