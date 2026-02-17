@@ -99,7 +99,7 @@ class Chase:
             if self.options.detail:
                 for row in sorted(
                     mdata.transactions,
-                    key=lambda x: x.get("transaction_date"),
+                    key=lambda x: x["transaction_date"],
                 ):
                     amount = float(row["Amount"])
                     date = strftime("%Y-%m-%d", localtime(row["transaction_date"]))
@@ -420,7 +420,7 @@ class Chase:
 
         return recurring
 
-    def _analyze_merchant_recurrence(
+    def _analyze_merchant_recurrence(  # noqa: PLR914, PLR911
         self, merchant: str, transactions: list[dict[str, Any]], *, income: bool = False
     ) -> dict[str, Any] | None:
         """Analyze a merchant's transactions for recurring patterns.

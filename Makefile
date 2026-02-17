@@ -5,7 +5,7 @@ lint :: mypy
 doc :: README.md
 
 # The following is for manual testing.
-CHASE	:= python -m chase -s foy -e fom --use-datafiles
+CHASE	:= pdm run python -m chase -s foy -e fom --use-datafiles
 
 report:
 	$(CHASE)
