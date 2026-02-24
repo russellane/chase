@@ -37,8 +37,6 @@ class CategoryData:
 class Chase:
     """Process downloaded account transaction files from Chase Bank."""
 
-    # pylint: disable=too-many-instance-attributes
-
     def __init__(self, config: dict[str, Any], options: Namespace) -> None:
         """Initialize new `Chase` object."""
 
@@ -54,14 +52,11 @@ class Chase:
         # Exclude these categories from charts.
         self.chart_exclude_categories = config.get("chart_exclude_categories", [])
 
-        #
         self.options = options
 
-        #
         if self.options.no_exclude_chart_categories:
             self.chart_exclude_categories = []
 
-        #
         self.categories: dict[str, CategoryData] = {}
         self.filenames_by_row: dict[str, str] = {}
         self.chart_title_date: str | None = None
@@ -73,7 +68,6 @@ class Chase:
             self.categories.items(),
             key=lambda x: -abs(x[1].total),
         ):
-
             if self.options.category is not None and self.options.category != category:
                 # Limit transactions to `--category CATEGORY`.
                 continue
@@ -103,7 +97,8 @@ class Chase:
                 ):
                     amount = float(row["Amount"])
                     date = strftime("%Y-%m-%d", localtime(row["transaction_date"]))
-                    merchant = row["Description"]  # not normalized.
+                    # PLW2901: overridden with un-normalized description for display.
+                    merchant = row["Description"]  # noqa: PLW2901  # not normalized
                     print(self.color_text("transaction", f"{amount:10.2f} {date} {merchant}"))
 
             print(
@@ -120,7 +115,6 @@ class Chase:
             self.categories.items(),
             key=lambda x: -abs(x[1].total),
         ):
-
             if self.options.category is not None and self.options.category != category:
                 # Limit transactions to `--category CATEGORY`.
                 continue
@@ -420,7 +414,8 @@ class Chase:
 
         return recurring
 
-    def _analyze_merchant_recurrence(  # noqa: PLR914, PLR911
+    # Too many locals/returns; recurrence detection checks multiple orthogonal criteria inline.
+    def _analyze_merchant_recurrence(  # noqa: PLR0914, PLR0911
         self, merchant: str, transactions: list[dict[str, Any]], *, income: bool = False
     ) -> dict[str, Any] | None:
         """Analyze a merchant's transactions for recurring patterns.

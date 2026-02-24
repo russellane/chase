@@ -7,7 +7,6 @@ from chase.cli import main
 
 
 def test_main() -> None:
-
     def _main() -> None:
         run(["python", "-m", "chase", "--version"], check=True)
         sys.exit(0)

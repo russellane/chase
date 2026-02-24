@@ -8,12 +8,10 @@ from chase.cli import ChaseCLI
 
 @pytest.fixture(name="matplotlib")
 def _matplotlib(mocker: MockerFixture) -> None:
-
     mocker.patch("matplotlib.pyplot.show")
 
 
 def run(options: list[str]) -> None:
-
     sys.argv = ["chase"]
     if options:
         sys.argv += options

@@ -254,10 +254,9 @@ class ChaseCLI(BaseCLI):
         """Return True if `--barchart` or `--piechart`."""
         return bool(self.options.barchart or self.options.piechart)
 
-    def main(self) -> None:
+    # Too many branches; main dispatches over many mutually exclusive report and chart options.
+    def main(self) -> None:  # noqa: PLR0912
         """Command line interface entry point (method)."""
-
-        # pylint: disable=too-many-branches
 
         if self.options.print_sample_config:
             self._print_sample_config()
@@ -274,12 +273,10 @@ class ChaseCLI(BaseCLI):
         # Read all `csv` files on the command line within the date range.
         chase = Chase(self.config, self.options)
         start, end = self._get_start_end_options()
-        #
         if self.options.use_datafiles and (datafiles := self.config.get("datafiles")):
             files = glob(str(Path(datafiles).expanduser()))
         else:
             files = self.options.FILES
-        #
         chase.read_input_files(files, start, end)
 
         # If start/end are undefined, set to actual earliest/latest transactions.
@@ -368,8 +365,8 @@ class ChaseCLI(BaseCLI):
         return nmonths
 
     def _print_sample_config(self) -> None:
-
-        print(self.dedent("""
+        print(
+            self.dedent("""
     datafiles = "~/Documents/Chase/*CSV"
 
     # Exclude these categories from charts.
@@ -391,7 +388,8 @@ class ChaseCLI(BaseCLI):
     [categories_by_merchant]
     # "APS electric pmt PAYMENTS" = "Bills & Utilities"
     # "CIRCLE K # 09529" = "Groceries"
-            """))
+            """)
+        )
 
 
 def main(args: list[str] | None = None) -> None:

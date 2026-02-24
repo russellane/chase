@@ -34,7 +34,6 @@ class Chart:
         self.end = end
 
     def _format_title(self, title: str) -> str:
-
         _start = strftime("%Y-%m-%d", localtime(self.start))
         _end = strftime("%Y-%m-%d", localtime(self.end))
         return f"{title} over {self.nmonths} Months from {_start} to {_end}"
@@ -48,12 +47,10 @@ class Chart:
             self._display_piechart_category_totals()
 
     def _display_barchart_category_totals(self) -> None:
-
         categories, totals = self._get_category_totals()
         self._display_barchart("Categories", "Total", "Category Totals", categories, totals)
 
     def _display_piechart_category_totals(self) -> None:
-
         categories, values = self._get_category_totals()
         self._display_piechart("Category Totals", categories, values)
 
@@ -146,7 +143,6 @@ class Chart:
             self._display_piechart_monthly_category()
 
     def _display_barchart_monthly_category(self) -> None:
-
         months, totals = self._get_monthly_totals(self.chase.options.category)
         self._display_barchart(
             "Months",
@@ -157,7 +153,6 @@ class Chart:
         )
 
     def _display_piechart_monthly_category(self) -> None:
-
         months, totals = self._get_monthly_totals(self.chase.options.category)
         self._display_piechart(
             f"Monthly Totals for {self.chase.options.category!r}",
@@ -176,7 +171,6 @@ class Chart:
         totals = []
 
         for month, total in sorted(cdata.monthly_totals.items()):
-
             months.append(month)
             totals.append(round(total * -1))
 
@@ -192,9 +186,6 @@ class Chart:
         xdata: list[str],
         ydata: list[int],
     ) -> None:
-        # pylint: disable=too-many-arguments
-        # pylint: disable=too-many-positional-arguments
-
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         plt.figure(figsize=(12, 8))
         bars = plt.bar(xdata, ydata, color=colors)
@@ -244,7 +235,6 @@ class Chart:
         xdata: list[str],
         ydata: list[int],
     ) -> None:
-
         # pie() uses `plt.rcParams["axes.prop_cycle"].by_key()["color"]` by default.
         # plt.figure(figsize=(16, 9))  # 16:9 aspect ratio for widescreen displays
         # plt.figure(figsize=(10, 6))
@@ -263,7 +253,9 @@ class Chart:
         plt.pie(
             sorted_abs_values,
             labels=sorted_categories,
-            autopct=lambda pct: f"{pct:.0f}%\n${sorted_values[sorted_categories.index(plt.gca().texts[-1].get_text())]}",  # noqa
+            autopct=lambda pct: (
+                f"{pct:.0f}%\n${sorted_values[sorted_categories.index(plt.gca().texts[-1].get_text())]}"
+            ),  # noqa
             startangle=90,
             counterclock=False,
         )

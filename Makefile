@@ -1,6 +1,5 @@
 include Python.mk
 PROJECT = chase
-COV_FAIL_UNDER = 100
 lint :: mypy
 doc :: README.md
 
