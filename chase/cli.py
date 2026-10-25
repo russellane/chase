@@ -274,7 +274,7 @@ class ChaseCLI(BaseCLI):
         chase = Chase(self.config, self.options)
         start, end = self._get_start_end_options()
         if self.options.use_datafiles and (datafiles := self.config.get("datafiles")):
-            files = glob(str(Path(datafiles).expanduser()))
+            files = glob(self._ignorecase(str(Path(datafiles).expanduser())))
         else:
             files = self.options.FILES
         chase.read_input_files(files, start, end)
@@ -352,6 +352,23 @@ class ChaseCLI(BaseCLI):
             return int(mktime((st.tm_year, st.tm_mon, 1, 0, 0, 0, 0, 0, -1)))
 
         return int(mktime(strptime(date_str, "%Y-%m-%d")))
+
+    @staticmethod
+    def _ignorecase(pattern: str) -> str:
+        """Return glob `pattern` made case-insensitive."""
+
+        result = []
+        in_brackets = False
+        for c in pattern:
+            if c == "[":
+                in_brackets = True
+            elif c == "]":
+                in_brackets = False
+            elif c.isalpha() and not in_brackets:
+                result.append(f"[{c.lower()}{c.upper()}]")
+                continue
+            result.append(c)
+        return "".join(result)
 
     def _months_between(self, start: int, end: int) -> int:
         """Return the number of months between two Unix timestamps."""

@@ -3,7 +3,7 @@ from subprocess import run
 
 import pytest
 
-from chase.cli import main
+from chase.cli import ChaseCLI, main
 
 
 def test_main() -> None:
@@ -66,3 +66,8 @@ def test_main_module() -> None:
     with pytest.raises(SystemExit) as err:
         runpy.run_module("chase", run_name="__main__", alter_sys=True)
     assert err.value.code == 0
+
+
+def test_ignorecase() -> None:
+    assert ChaseCLI._ignorecase("~/a1/*CSV") == "~/[aA]1/*[cC][sS][vV]"
+    assert ChaseCLI._ignorecase("x[a-z].c") == "[xX][a-z].[cC]"

@@ -75,3 +75,8 @@ def test_barchart_monthly_category_no_date_filter(matplotlib: str) -> None:
     sys.argv = ["chase", "--barchart", "--use-datafiles", "--category", "Groceries"]
     print(f"Running {sys.argv!r}")
     ChaseCLI().main()
+
+
+def test_barchart_monthly_unknown_category(matplotlib: str) -> None:
+    _ = matplotlib  # unused-argument
+    run(["--monthly", "--category", "No Such Category"])
